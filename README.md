@@ -1,4 +1,6 @@
 hl7
 ===
 
-HL7 editor and tester
+Java/Swing/HAPI HL7 editor and tester
+
+Get HAPI from http://hl7api.sourceforge.net/
