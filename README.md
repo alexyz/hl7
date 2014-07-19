@@ -11,3 +11,8 @@ Screenshots
 -----------
 
 ![Screenshot](https://dl.dropboxusercontent.com/u/8069847/hl7.png)
+
+Download
+--------
+
+[Runnable jar file](https://dl.dropboxusercontent.com/u/8069847/_hl7.jar) (requires HAPI lib jars in same directory)
