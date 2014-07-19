@@ -4,7 +4,7 @@ import ca.uhn.hl7v2.*;
 import ca.uhn.hl7v2.model.*;
 
 /** printing visitor */
-public class PV extends MVA {
+public class PrintingMessageVisitor extends MessageVisitorAdapter {
 	
 	@Override
 	public boolean start (Message message) throws HL7Exception {
@@ -20,13 +20,13 @@ public class PV extends MVA {
 	
 	@Override
 	public boolean start (Segment segment, Location location) throws HL7Exception {
-		System.out.println("    " + location + " rep " + location.getSegmentRepetition() + " segment " + segment);
+		System.out.println("    " + location + " segment " + segment);
 		return true;
 	}
 	
 	@Override
 	public boolean start (Field field, Location location) throws HL7Exception {
-		System.out.println("      " + location + " rep " + location.getFieldRepetition() + " field " + field);
+		System.out.println("      " + location + " field " + field);
 		return true;
 	}
 	
@@ -38,7 +38,7 @@ public class PV extends MVA {
 	
 	@Override
 	public boolean visit (Primitive type, Location location) throws HL7Exception {
-		System.out.println("          " + location + " rep " + location.getFieldRepetition() + " primitive " + type);
+		System.out.println("          " + location + " primitive " + type);
 		return true;
 	}
 	

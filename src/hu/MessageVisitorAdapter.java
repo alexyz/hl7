@@ -4,7 +4,7 @@ import ca.uhn.hl7v2.*;
 import ca.uhn.hl7v2.model.*;
 
 /** message visitor adaptor */
-public class MVA implements MessageVisitor {
+public class MessageVisitorAdapter implements MessageVisitor {
 	
 	@Override
 	public boolean start (Message message) throws HL7Exception {
