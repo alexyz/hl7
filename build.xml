@@ -2,27 +2,33 @@
 <project default="jar">
 
 	<target name="jar">
-		<jar destfile="dist/_hl7.jar" basedir="bin/">
+		<jar destfile="dist/hl7.jar" basedir="bin/">
 			<manifest>
 				<attribute name="Main-Class" value="hu.EditorFrame" />
-				<attribute name="Class-Path" value="hapi-base-2.2.jar
-      				log4j-1.2.17.jar
-      				slf4j-api-1.6.6.jar
-      				slf4j-log4j12-1.6.6.jar
-      				hapi-structures-v21-2.2.jar
-      				hapi-structures-v22-2.2.jar
-      				hapi-structures-v23-2.2.jar
-      				hapi-structures-v24-2.2.jar
-      				hapi-structures-v25-2.2.jar
-      				hapi-structures-v26-2.2.jar
-      				hapi-structures-v231-2.2.jar
-      				hapi-structures-v251-2.2.jar" />
+				<attribute name="Class-Path" value="hl7deps.jar" />
 			</manifest>
+		</jar>
+		<jar destfile="dist/hl7deps.jar">
+			<zipfileset src="lib/hapi-base-2.2.jar" />
+			<zipfileset src="lib/hapi-examples-2.2.jar" />
+			<zipfileset src="lib/hapi-hl7overhttp-2.2.jar" />
+			<zipfileset src="lib/hapi-structures-v21-2.2.jar" />
+			<zipfileset src="lib/hapi-structures-v22-2.2.jar" />
+			<zipfileset src="lib/hapi-structures-v23-2.2.jar" />
+			<zipfileset src="lib/hapi-structures-v231-2.2.jar" />
+			<zipfileset src="lib/hapi-structures-v24-2.2.jar" />
+			<zipfileset src="lib/hapi-structures-v25-2.2.jar" />
+			<zipfileset src="lib/hapi-structures-v251-2.2.jar" />
+			<zipfileset src="lib/hapi-structures-v26-2.2.jar" />
+			<zipfileset src="lib/log4j-1.2.17.jar" />
+			<zipfileset src="lib/slf4j-api-1.6.6.jar" />
+			<zipfileset src="lib/slf4j-log4j12-1.6.6.jar" />
 		</jar>
 	</target>
 
 	<target name="deploy" depends="jar">
-		<copy file="dist/_hl7.jar" tofile="${user.home}/Dropbox/Public/_hl7.jar" />
+		<copy file="dist/hl7.jar" tofile="${user.home}/Dropbox/Public/hl7.jar" />
+		<copy file="dist/hl7deps.jar" tofile="${user.home}/Dropbox/Public/hl7deps.jar" />
 	</target>
 
 </project>
