@@ -1,23 +1,10 @@
 package hu;
 
 import java.awt.Dimension;
-import java.awt.datatransfer.UnsupportedFlavorException;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.beans.PropertyChangeListener;
+import java.awt.event.*;
 import java.io.File;
-import java.io.IOException;
 
-import javax.swing.AbstractAction;
-import javax.swing.Action;
-import javax.swing.JFileChooser;
-import javax.swing.JFrame;
-import javax.swing.JMenu;
-import javax.swing.JMenuBar;
-import javax.swing.JMenuItem;
-import javax.swing.JTabbedPane;
+import javax.swing.*;
 
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
@@ -35,15 +22,13 @@ public class EditorJFrame extends JFrame {
 	}
 	
 	private final JTabbedPane tabs = new JTabbedPane();
-	private final DT dropTarget = new DT();
 	
 	public EditorJFrame () {
 		super("HAPI HL7|^~\\&!");
 		setDefaultCloseOperation(EXIT_ON_CLOSE);
-		setDropTarget(dropTarget);
 		setJMenuBar(createMenu());
+		setTransferHandler(new TH());
 		
-		tabs.setDropTarget(dropTarget);
 		tabs.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseClicked (MouseEvent e) {
@@ -53,6 +38,7 @@ public class EditorJFrame extends JFrame {
 				}
 			}
 		});
+		tabs.setTransferHandler(new TH());
 		
 		addEditor();
 		
@@ -140,7 +126,7 @@ public class EditorJFrame extends JFrame {
 	}
 
 	private void addEditor (String name, EditorPanel ep) {
-		ep.setDropTarget(dropTarget);
+		ep.setTransferHandler(new TH());
 		tabs.addTab(name, ep);
 		tabs.setSelectedComponent(ep);
 	}

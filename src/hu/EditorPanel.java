@@ -4,17 +4,14 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.GridLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.awt.event.*;
 import java.io.File;
 import java.util.*;
 
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.*;
-import javax.swing.text.BadLocationException;
-import javax.swing.text.DefaultHighlighter;
-import javax.swing.text.Highlighter;
+import javax.swing.text.*;
 
 import ca.uhn.hl7v2.HL7Exception;
 
@@ -87,7 +84,12 @@ class EditorPanel extends JPanel {
 	
 	private void caretUpdated (int i) {
 		System.out.println("caret updated");
-		info = MsgUtil.getInfo(textArea.getText(), i);
+		String text = textArea.getText();
+		if (text.length() == 0) {
+			return;
+		}
+		
+		info = MsgUtil.getInfo(text, i);
 		
 		String currentError = null;
 
