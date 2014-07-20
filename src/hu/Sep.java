@@ -3,6 +3,7 @@ package hu;
 import ca.uhn.hl7v2.HL7Exception;
 import ca.uhn.hl7v2.util.Terser;
 
+/** represents separator characters in a message */
 public class Sep {
 
 	public static final char segSep = '\r';
