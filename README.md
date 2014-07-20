@@ -15,4 +15,5 @@ Screenshots
 Download
 --------
 
-[Runnable jar file](https://dl.dropboxusercontent.com/u/8069847/_hl7.jar) (requires HAPI lib jars in same directory)
+[Runnable jar file](https://dl.dropboxusercontent.com/u/8069847/hl7.jar)
+[Dependencies jar](https://dl.dropboxusercontent.com/u/8069847/hl7deps.jar)

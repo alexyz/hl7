@@ -4,7 +4,7 @@
 	<target name="jar">
 		<jar destfile="dist/hl7.jar" basedir="bin/">
 			<manifest>
-				<attribute name="Main-Class" value="hu.EditorFrame" />
+				<attribute name="Main-Class" value="hu.EditorJFrame" />
 				<attribute name="Class-Path" value="hl7deps.jar" />
 			</manifest>
 		</jar>
