@@ -7,19 +7,19 @@ import java.awt.event.MouseEvent;
 import javax.swing.JFrame;
 import javax.swing.JTabbedPane;
 
-import ca.uhn.hl7v2.*;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
 
 public class EditorFrame extends JFrame {
-	
-	public static final HapiContext context = new DefaultHapiContext();
 	
 	public static void main (String[] args) {
 		new EditorFrame().show();
 	}
 	
 	public EditorFrame () {
-		super("HL7|^~\\&!");
+		super("HAPI HL7|^~\\&!");
 		setDefaultCloseOperation(EXIT_ON_CLOSE);
+		Logger.getRootLogger().setLevel(Level.INFO);
 		JTabbedPane p = new JTabbedPane();
 		p.addTab("editor", new EditorPanel());
 		p.addMouseListener(new MouseAdapter() {

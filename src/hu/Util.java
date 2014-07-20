@@ -3,108 +3,79 @@ package hu;
 import java.lang.reflect.Method;
 import java.util.regex.*;
 
-import ca.uhn.hl7v2.HL7Exception;
-import ca.uhn.hl7v2.Location;
+import ca.uhn.hl7v2.*;
 import ca.uhn.hl7v2.model.*;
+import ca.uhn.hl7v2.parser.CanonicalModelClassFactory;
 import ca.uhn.hl7v2.parser.PipeParser;
 import ca.uhn.hl7v2.util.Terser;
 import ca.uhn.hl7v2.validation.impl.ValidationContextFactory;
 
 public class Util {
-
-	public static String[] getTerserPath (String msgstr, int i) {
-		msgstr = msgstr.replace("\n", "\r");
+	
+	/** get info about the message and the index */
+	public static TP getInfo (String msgstrLf, int index) {
+		// parse the message
+		final String msgstr = msgstrLf.replace("\n", "\r");
+		HapiContext context = new DefaultHapiContext();
+		CanonicalModelClassFactory mcf = new CanonicalModelClassFactory("2.5");
+		context.setModelClassFactory(mcf);
 		Message msg;
 		Terser t;
-		String msh1, msh2;
+		PipeParser p = context.getPipeParser();
 		try {
-			PipeParser p = EditorFrame.context.getPipeParser();
 			p.setValidationContext(ValidationContextFactory.noValidation());
 			msg = p.parse(msgstr);
 			t = new Terser(msg);
-			msh1 = t.get("MSH-1");
-			msh2 = t.get("MSH-2");
 		} catch (Exception e) {
 			System.out.println("could not parse message: " + e.toString());
-			return new String[] { "", "", "" };
+			e.printStackTrace(System.out);
+			return new TP(e.getMessage(), "", "");
 		}
 		
-//		try {
-//			MessageVisitors.visit(msg, MessageVisitors.visitPopulatedElements(new PrintingMessageVisitor()));
-//		} catch (Exception e) {
-//			System.out.println("could not print values: " + e);
-//		}
-		
-		final char fieldSep = msh1.charAt(0);
-		final char repSep = msh2.charAt(1);
-		final char compSep = msh2.charAt(0);
-		final char subCompSep = msh2.charAt(3);
-		
-		int segOrd = 1;
-		int fieldOrd = 0;
-		int repIndex = 0;
-		int compOrd = 1;
-		int subCompOrd = 1;
-		int ch = 0;
-		
-		// count back from i
-		i--;
-		while (i > 0) {
-			char c = msgstr.charAt(i);
-			if (c == '\r') {
-				segOrd++;
-			} else if (segOrd == 1) {
-				if (c == fieldSep) {
-					// System.out.println("field at " + msgstr.substring(i,
-					// i+10));
-					fieldOrd++;
-				} else if (fieldOrd == 0) {
-					if (c == repSep) {
-						repIndex++;
-					} else if (repIndex == 0) {
-						if (c == compSep) {
-							compOrd++;
-						} else if (compOrd == 1) {
-							if (c == subCompSep) {
-								subCompOrd++;
-							} else if (subCompOrd == 1) {
-								ch++;
-							}
-						}
-					}
-				}
-			}
-			
-			i--;
-		}
-		
-		if (segOrd == 1) {
-			fieldOrd++;
-		}
-		
-		// ["/"]   (group_spec ["(" rep ")"] "/")*   segment_spec   ["(" rep ")"]    "-"    field    ["(" rep ")"] ["-" component ["-" subcomponent]] 
-		SL sl = getSegmentLocation(msg, segOrd);
-		String path = "";
-		String desc = "";
-		if (sl != null) {
-			path = sl.location.toString() + "-" + fieldOrd + (repIndex > 0 ? "(" + repIndex + ")" : "") + (compOrd > 1 ? "-" + compOrd : "") + (subCompOrd > 1 ? "-" + subCompOrd : "");
-			desc = getDesc(sl.segment, fieldOrd, compOrd, subCompOrd);
-		}
-		
-		String value = null;
+		// do the validations
+		Sep sep;
 		try {
-			value = t.get(path);
-		} catch (Exception e) {
-			System.out.println("could not get path value: " + e);
+			sep = new Sep(t);
+		} catch (HL7Exception e1) {
+			return new TP("could not get seperators", "", "");
 		}
-		// String.format("seg=%d field=%d rep=%d comp=%d sub=%d ch=%d desc=%s", segOrd, fieldOrd, repIndex, compOrd, subCompOrd, ch,
-		return new String[] { path, value, desc };
+		try {
+			// TODO add these to info
+			MessageVisitors.visit(msg, new ValidatingMessageVisitor(msgstr, sep, "2.5"));
+		} catch (Exception e) {
+			System.out.println("could not validate: " + e);
+		}
 		
+		// get the terser path for the index
+		Pos pos = getPosition(msgstr, sep, index);
+		return getTerserPath(msg, t, pos);
 	}
 	
+	/** get the terser path for the message position */
+	public static TP getTerserPath (Message msg, Terser t, Pos pos) {
+		
+		SL sl = getSegmentLocation(msg, pos.segOrd);
+		String path = "";
+		String desc = "";
+		String value = "";
+		
+		if (sl != null) {
+			path = sl.location.toString() + "-" + pos.fieldOrd + (pos.fieldRep > 0 ? "(" + pos.fieldRep + ")" : "") + (pos.compOrd > 1 ? "-" + pos.compOrd : "") + (pos.subCompOrd > 1 ? "-" + pos.subCompOrd : "");
+			desc = getDesc(sl.segment, pos);
+			try {
+				value = t.get(path);
+			} catch (Exception e) {
+				System.out.println("could not get path value: " + e);
+			}
+		}
+		
+		return new TP(path, value, desc);
+	}
+	
+	/** get segment and segment location from a segment ordinal */
 	public static SL getSegmentLocation (final Message msg, final int segmentOrd) {
 		final SL[] sl = new SL[1];
-		MessageVisitorAdapter va2 = new MessageVisitorAdapter() {
+		MessageVisitorAdapter mv = new MessageVisitorAdapter() {
 			int s = 1;
 			@Override
 			public boolean start (Segment segment, Location location) throws HL7Exception {
@@ -116,7 +87,7 @@ public class Util {
 			}
 		};
 		try {
-			MessageVisitors.visit(msg, MessageVisitors.visitStructures(va2));
+			MessageVisitors.visit(msg, MessageVisitors.visitStructures(mv));
 		} catch (HL7Exception e) {
 			System.out.println("could not get segment name: " + e);
 		}
@@ -124,17 +95,17 @@ public class Util {
 	}
 	
 	/** get description of hl7 field, component and subcomponent */
-	public static String getDesc (final Segment segment, final int fieldOrd, final int compOrd, final int subCompOrd) {
+	public static String getDesc (final Segment segment, final Pos pos) {
 		String desc = "desc";
-		Object[] fd = getDesc(segment.getClass(), fieldOrd);
+		Object[] fd = getDesc(segment.getClass(), pos.fieldOrd);
 		if (fd != null) {
 			desc = "" + fd[0];
 			if (fd[1] != null) {
-				Object[] cd = getDesc((Class<?>) fd[1], compOrd);
+				Object[] cd = getDesc((Class<?>) fd[1], pos.compOrd);
 				if (cd != null) {
 					desc += " " + cd[0];
 					if (cd[1] != null) {
-						Object[] scd = getDesc((Class<?>) cd[1], subCompOrd);
+						Object[] scd = getDesc((Class<?>) cd[1], pos.subCompOrd);
 						if (scd != null) {
 							desc += " " + scd[0];
 						}
@@ -145,11 +116,12 @@ public class Util {
 		return desc;
 	}
 	
+	/** get description of element from class */
 	private static Object[] getDesc (Class<?> cl, int ord) {
 		Pattern methodPat = Pattern.compile("get\\w{" + cl.getSimpleName().length() + "}(\\d+)_(\\w+)");
 		for (Method m : cl.getMethods()) {
 			Class<?> rt = m.getReturnType();
-			if (!rt.isPrimitive()) {
+			if (rt != null && !rt.isPrimitive()) {
 				// getObr5_PriorityOBR()
 				Matcher mat = methodPat.matcher(m.getName());
 				if (mat.matches()) {
@@ -163,7 +135,7 @@ public class Util {
 						if (!AbstractType.class.isAssignableFrom(rt)) {
 							rt = null;
 						}
-						if (AbstractPrimitive.class.isAssignableFrom(rt)) {
+						if (rt != null && AbstractPrimitive.class.isAssignableFrom(rt)) {
 							rt = null;
 						}
 						return new Object[] { fn, rt };
@@ -174,14 +146,82 @@ public class Util {
 		return null;
 	}
 	
-
-	private static class SL {
-		final Segment segment;
-		final Location location;
-		public SL (Segment segment, Location location) {
-			this.segment = segment;
-			this.location = location;
+	public static Pos getPosition (final String msgstr, final Sep sep, final int index) {
+		// start field at 1 for MSH, 0 for others
+		int s = 1, f = 1, fr = 0, c = 1, sc = 1;
+		for (int i = 0; i < index; i++) {
+			char ch = msgstr.charAt(i);
+			if (ch == Sep.segSep) {
+				s++;
+				f = 0;
+				fr = 0;
+				c = 1;
+				sc = 1;
+			} else if (ch == sep.fieldSep) {
+				f++;
+				fr = 0;
+				c = 1;
+				sc = 1;
+			} else if (ch == sep.repSep) {
+				fr++;
+				c = 1;
+				sc = 1;
+			} else if (ch == sep.compSep) {
+				c++;
+				sc = 1;
+			} else if (ch == sep.subCompSep) {
+				sc++;
+			}
 		}
+		return new Pos(s, f, fr, c, sc);
+	}
+	
+	/** get the indexes of the given primitive. field rep is 0 based, all others are 1 based */
+	public static int[] getIndex (final String msgstr, final Sep sep, final Pos pos) {
+		System.out.println("get indexes " + pos);
+		int[] indexes = new int[2];
+		// start field at 1 for MSH, 0 for others
+		int s = 1, f = 1, fr = 0, c = 1, sc = 1, l = 0;
+		for (int i = 0; i < msgstr.length(); i++) {
+			char ch = msgstr.charAt(i);
+			if (ch == Sep.segSep) {
+				s++;
+				f = 0;
+				fr = 0;
+				c = 1;
+				sc = 1;
+				l = 0;
+			} else if (ch == sep.fieldSep) {
+				f++;
+				fr = 0;
+				c = 1;
+				sc = 1;
+				l = 0;
+			} else if (ch == sep.repSep) {
+				fr++;
+				c = 1;
+				sc = 1;
+				l = 0;
+			} else if (ch == sep.compSep) {
+				c++;
+				sc = 1;
+				l = 0;
+			} else if (ch == sep.subCompSep) {
+				sc++;
+				l = 0;
+			} else {
+				l++;
+			}
+			//System.out.println(String.format("s %d f %d fr %d c %d sc %d l %d", s, f, fr, c, sc, l));
+			if (s == pos.segOrd && f == pos.fieldOrd && fr == pos.fieldRep && c == pos.compOrd && sc == pos.subCompOrd) {
+				//System.out.println("char: " + ch);
+				if (indexes[0] == 0) {
+					indexes[0] = i + 1;
+				}
+				indexes[1] = indexes[0] + l;
+			}
+		}
+		return indexes;
 	}
 	
 }

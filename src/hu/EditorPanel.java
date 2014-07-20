@@ -1,12 +1,16 @@
 package hu;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Font;
 import java.awt.GridLayout;
 
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.*;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.DefaultHighlighter;
+import javax.swing.text.Highlighter.HighlightPainter;
 
 
 class EditorPanel extends JPanel {
@@ -24,13 +28,19 @@ class EditorPanel extends JPanel {
 		textArea.addCaretListener(new CaretListener() {
 			@Override
 			public void caretUpdate (CaretEvent e) {
-				String[] path = Util.getTerserPath(textArea.getText(), Math.min(e.getMark(), e.getDot()));
-				pathField.setText(path[0]);
-				valueField.setText(path[1]);
-				descField.setText(path[2]);
+				//TP path = Util.getTerserPath(textArea.getText(), Math.min(e.getMark(), e.getDot()));
+				TP path = Util.getInfo(textArea.getText(), Math.min(e.getMark(), e.getDot()));
+				pathField.setText(path.path);
+				valueField.setText(path.value);
+				descField.setText(path.description);
+				try {
+					textArea.getHighlighter().addHighlight(0,3,new DefaultHighlighter.DefaultHighlightPainter(Color.red));
+				} catch (BadLocationException e1) {
+					e1.printStackTrace();
+				}
 			}
 		});
-		pathField.setBorder(new TitledBorder("HAPI Terser Path"));
+		pathField.setBorder(new TitledBorder("Terser Path"));
 		pathField.setFont(MONO);
 		valueField.setBorder(new TitledBorder("Value"));
 		valueField.setFont(MONO);
