@@ -6,6 +6,7 @@ import java.awt.Font;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
 import java.util.*;
 
 import javax.swing.*;
@@ -28,6 +29,7 @@ class EditorPanel extends JPanel {
 	private final TreeMap<Pos,Object> objs = new TreeMap<>();
 	
 	private Info info;
+	private File file;
 	
 	public EditorPanel () {
 		super(new BorderLayout());
@@ -67,9 +69,25 @@ class EditorPanel extends JPanel {
 		add(fieldsPanel, BorderLayout.SOUTH);
 	}
 	
+	public File getFile () {
+		return file;
+	}
+	
+	public void setFile (File file) {
+		this.file = file;
+	}
+	
+	public String getText() {
+		return textArea.getText();
+	}
+	
+	public void setText(String text) {
+		textArea.setText(text);
+	}
+	
 	private void caretUpdated (int i) {
 		System.out.println("caret updated");
-		info = Util.getInfo(textArea.getText(), i);
+		info = MsgUtil.getInfo(textArea.getText(), i);
 		
 		String currentError = null;
 

@@ -56,7 +56,7 @@ public class ValidatingMessageVisitor extends MessageVisitorAdapter {
 //				int[] indexes = Util.getIndex(msgstr, sep, pos);
 //				System.out.println("  indexes=" + Arrays.toString(indexes));
 //				System.out.println("  string=" + msgstr.substring(indexes[0], indexes[1]));
-				errors.add(new VE(pos, errorMsg, Util.getIndex(msgstr, sep, pos)));
+				errors.add(new VE(pos, errorMsg, MsgUtil.getIndex(msgstr, sep, pos)));
 				break;
 			}
 		}

@@ -11,7 +11,8 @@ import ca.uhn.hl7v2.parser.PipeParser;
 import ca.uhn.hl7v2.util.Terser;
 import ca.uhn.hl7v2.validation.impl.ValidationContextFactory;
 
-public class Util {
+/** utilities for hl7 messages */
+public class MsgUtil {
 	
 	/** get info about the message and the index */
 	public static Info getInfo (final String msgstrLf, final int index) {
