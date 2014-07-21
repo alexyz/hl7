@@ -23,7 +23,7 @@ class EditorPanel extends JPanel {
 	private final JTextField descField = new JTextField();
 	private final JTextField pathField = new JTextField();
 	private final JTextField valueField = new JTextField();
-	private final TreeMap<Pos,Object> objs = new TreeMap<>();
+	private final List<Object> highlights = new ArrayList<>();
 	
 	private Info info;
 	private File file;
@@ -83,33 +83,39 @@ class EditorPanel extends JPanel {
 	}
 	
 	private void caretUpdated (int i) {
-		System.out.println("caret updated");
+		System.out.println("caret updated " + i);
 		String text = textArea.getText();
 		if (text.length() == 0) {
 			return;
 		}
 		
 		info = MsgUtil.getInfo(text, i);
+		if (info.pos != null) {
+			System.out.println("caret pos " + info.pos);
+		}
 		
+		// do the error highlighting
 		String currentError = null;
-
 		if (info.errors != null) {
 			Highlighter h = textArea.getHighlighter();
-			
-			h.removeAllHighlights();
+			for (Object o : highlights) {
+				h.removeHighlight(o);
+			}
+			highlights.clear();
 			for (VE ve : info.errors) {
 				if (ve.pos.equals(info.pos)) {
 					currentError = ve.msg;
 				}
 				try {
 					System.out.println("add highlight " + ve.indexes[0] + ", " + ve.indexes[1]);
-					h.addHighlight(ve.indexes[0],ve.indexes[1],new DefaultHighlighter.DefaultHighlightPainter(ERROR));
+					highlights.add(h.addHighlight(ve.indexes[0],ve.indexes[1],new DefaultHighlighter.DefaultHighlightPainter(ERROR)));
 				} catch (BadLocationException e) {
 					throw new RuntimeException(e);
 				}
 			}
 		}
 		
+		// populate the fields
 		if (info.tp != null) {
 			if (!pathField.getText().equals(info.tp.path)) {
 				pathField.setText(info.tp.path);
@@ -129,20 +135,33 @@ class EditorPanel extends JPanel {
 	}
 	
 	private void pathUpdated() {
-		if (info != null && info.msg != null) {
-			System.out.println("update value");
-			String value = "";
+		System.out.println("path updated");
+		if (info != null && info.t != null) {
 			try {
-				value = info.t.get(pathField.getText());
+				String value = info.t.get(pathField.getText());
+				valueField.setText(value);
 			} catch (HL7Exception e1) {
-				value = e1.getMessage();
+				descField.setText(e1.getMessage());
 			}
-			valueField.setText(value);
 		}
 	}
 	
 	private void valueUpdated () {
 		System.out.println("value updated");
+		if (info != null && info.t != null) {
+			try {
+				info.t.set(pathField.getText(), valueField.getText());
+				String msgstr = info.msg.encode();
+				Pos pos = info.pos;
+				// this will update info
+				textArea.setText(msgstr.replace(Sep.segSep, '\n'));
+				int[] index = MsgUtil.getIndex(msgstr, info.sep, pos);
+				System.out.println("caret to " + index[1]);
+				textArea.setCaretPosition(index[1]);
+			} catch (HL7Exception e1) {
+				descField.setText(e1.getMessage());
+			}
+		}
 	}
 	
 }

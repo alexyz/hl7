@@ -55,7 +55,7 @@ public class MsgUtil {
 		// get the terser path for the index
 		Pos pos = getPosition(msgstr, sep, index);
 		TP tp = getTerserPath(msg, t, pos);
-		return new Info(msg, t, pos, tp, errors);
+		return new Info(msg, t, sep, pos, tp, errors);
 	}
 	
 	/** get the terser path for the message position */
@@ -153,11 +153,11 @@ public class MsgUtil {
 	}
 	
 	/** get the segment, field etc for the character index in the message */
-	public static Pos getPosition (final String msgstr, final Sep sep, final int index) {
+	public static Pos getPosition (final String msgstrCr, final Sep sep, final int index) {
 		// start field at 1 for MSH, 0 for others
 		int s = 1, f = 1, fr = 0, c = 1, sc = 1;
 		for (int i = 0; i < index; i++) {
-			char ch = msgstr.charAt(i);
+			char ch = msgstrCr.charAt(i);
 			if (ch == Sep.segSep) {
 				s++;
 				f = 0;
@@ -184,13 +184,13 @@ public class MsgUtil {
 	}
 	
 	/** get the character indexes of the given primitive */
-	public static int[] getIndex (final String msgstr, final Sep sep, final Pos pos) {
+	public static int[] getIndex (final String msgstrCr, final Sep sep, final Pos pos) {
 		System.out.println("get indexes " + pos);
 		int[] indexes = new int[2];
 		// start field at 1 for MSH, 0 for others
 		int s = 1, f = 1, fr = 0, c = 1, sc = 1, l = 0;
-		for (int i = 0; i < msgstr.length(); i++) {
-			char ch = msgstr.charAt(i);
+		for (int i = 0; i < msgstrCr.length(); i++) {
+			char ch = msgstrCr.charAt(i);
 			if (ch == Sep.segSep) {
 				s++;
 				f = 0;

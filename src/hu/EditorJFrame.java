@@ -22,6 +22,7 @@ public class EditorJFrame extends JFrame {
 	}
 	
 	private final JTabbedPane tabs = new JTabbedPane();
+	private File dir = new File(System.getProperty("user.dir"));
 	
 	public EditorJFrame () {
 		super("HAPI HL7|^~\\&!");
@@ -61,12 +62,13 @@ public class EditorJFrame extends JFrame {
 		openItem.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed (ActionEvent e) {
-				System.out.println("open");
+				System.out.println("open " + dir);
 				JFileChooser fc = new JFileChooser();
-				fc.setSelectedFile(new File(System.getProperty("user.dir")));
+				fc.setCurrentDirectory(dir);
 				fc.setMultiSelectionEnabled(false);
 				if (fc.showOpenDialog(EditorJFrame.this) == JFileChooser.APPROVE_OPTION) {
 					addEditor(fc.getSelectedFile());
+					dir = fc.getCurrentDirectory();
 				}
 			}
 		});
@@ -75,15 +77,19 @@ public class EditorJFrame extends JFrame {
 		saveItem.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed (ActionEvent e) {
-				System.out.println("save as");
+				System.out.println("save as " + dir);
 				EditorPanel ep = (EditorPanel) tabs.getSelectedComponent();
 				if (ep != null) {
 					JFileChooser fc = new JFileChooser();
 					fc.setMultiSelectionEnabled(false);
 					if (ep.getFile() != null) {
 						fc.setSelectedFile(ep.getFile());
+					} else {
+						fc.setCurrentDirectory(dir);
 					}
 					if (fc.showSaveDialog(EditorJFrame.this) == JFileChooser.APPROVE_OPTION) {
+						dir = fc.getCurrentDirectory();
+						// this bit might fail
 						File file = fc.getSelectedFile();
 						FileUtil.writeFile(file, ep.getText());
 						ep.setFile(file);
