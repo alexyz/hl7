@@ -1,6 +1,7 @@
 package hu;
 
 import java.lang.reflect.Method;
+import java.util.List;
 import java.util.regex.*;
 
 import ca.uhn.hl7v2.*;
@@ -10,50 +11,55 @@ import ca.uhn.hl7v2.parser.PipeParser;
 import ca.uhn.hl7v2.util.Terser;
 import ca.uhn.hl7v2.validation.impl.ValidationContextFactory;
 
-public class Util {
+/** utilities for hl7 messages */
+public class MsgUtil {
 	
 	/** get info about the message and the index */
-	public static TP getInfo (String msgstrLf, int index) {
+	public static Info getInfo (final String msgstrLf, final int index) {
 		// parse the message
 		final String msgstr = msgstrLf.replace("\n", "\r");
 		HapiContext context = new DefaultHapiContext();
 		CanonicalModelClassFactory mcf = new CanonicalModelClassFactory("2.5");
 		context.setModelClassFactory(mcf);
+		
 		Message msg;
-		Terser t;
-		PipeParser p = context.getPipeParser();
 		try {
+			PipeParser p = context.getPipeParser();
 			p.setValidationContext(ValidationContextFactory.noValidation());
 			msg = p.parse(msgstr);
-			t = new Terser(msg);
 		} catch (Exception e) {
 			System.out.println("could not parse message: " + e.toString());
-			e.printStackTrace(System.out);
-			return new TP(e.getMessage(), "", "");
+			//e.printStackTrace(System.out);
+			return new Info(e.getMessage());
 		}
+		
+		Terser t = new Terser(msg);
 		
 		// do the validations
 		Sep sep;
 		try {
 			sep = new Sep(t);
 		} catch (HL7Exception e1) {
-			return new TP("could not get seperators", "", "");
+			return new Info("could not get seperators");
 		}
+		
+		List<VE> errors = null;
 		try {
-			// TODO add these to info
-			MessageVisitors.visit(msg, new ValidatingMessageVisitor(msgstr, sep, "2.5"));
+			ValidatingMessageVisitor vmv = new ValidatingMessageVisitor(msgstr, sep, "2.5");
+			MessageVisitors.visit(msg, vmv);
+			errors = vmv.getErrors();
 		} catch (Exception e) {
 			System.out.println("could not validate: " + e);
 		}
 		
 		// get the terser path for the index
 		Pos pos = getPosition(msgstr, sep, index);
-		return getTerserPath(msg, t, pos);
+		TP tp = getTerserPath(msg, t, pos);
+		return new Info(msg, t, pos, tp, errors);
 	}
 	
 	/** get the terser path for the message position */
-	public static TP getTerserPath (Message msg, Terser t, Pos pos) {
-		
+	public static TP getTerserPath (final Message msg, final Terser t, final Pos pos) {
 		SL sl = getSegmentLocation(msg, pos.segOrd);
 		String path = "";
 		String desc = "";
@@ -61,11 +67,11 @@ public class Util {
 		
 		if (sl != null) {
 			path = sl.location.toString() + "-" + pos.fieldOrd + (pos.fieldRep > 0 ? "(" + pos.fieldRep + ")" : "") + (pos.compOrd > 1 ? "-" + pos.compOrd : "") + (pos.subCompOrd > 1 ? "-" + pos.subCompOrd : "");
-			desc = getDesc(sl.segment, pos);
+			desc = getDescription(sl.segment, pos);
 			try {
 				value = t.get(path);
 			} catch (Exception e) {
-				System.out.println("could not get path value: " + e);
+				System.out.println("could not get terser path value: " + e);
 			}
 		}
 		
@@ -95,17 +101,17 @@ public class Util {
 	}
 	
 	/** get description of hl7 field, component and subcomponent */
-	public static String getDesc (final Segment segment, final Pos pos) {
+	public static String getDescription (final Segment segment, final Pos pos) {
 		String desc = "desc";
-		Object[] fd = getDesc(segment.getClass(), pos.fieldOrd);
+		Object[] fd = getDescription2(segment.getClass(), pos.fieldOrd);
 		if (fd != null) {
 			desc = "" + fd[0];
 			if (fd[1] != null) {
-				Object[] cd = getDesc((Class<?>) fd[1], pos.compOrd);
+				Object[] cd = getDescription2((Class<?>) fd[1], pos.compOrd);
 				if (cd != null) {
 					desc += " " + cd[0];
 					if (cd[1] != null) {
-						Object[] scd = getDesc((Class<?>) cd[1], pos.subCompOrd);
+						Object[] scd = getDescription2((Class<?>) cd[1], pos.subCompOrd);
 						if (scd != null) {
 							desc += " " + scd[0];
 						}
@@ -117,7 +123,7 @@ public class Util {
 	}
 	
 	/** get description of element from class */
-	private static Object[] getDesc (Class<?> cl, int ord) {
+	private static Object[] getDescription2 (Class<?> cl, int ord) {
 		Pattern methodPat = Pattern.compile("get\\w{" + cl.getSimpleName().length() + "}(\\d+)_(\\w+)");
 		for (Method m : cl.getMethods()) {
 			Class<?> rt = m.getReturnType();
@@ -146,6 +152,7 @@ public class Util {
 		return null;
 	}
 	
+	/** get the segment, field etc for the character index in the message */
 	public static Pos getPosition (final String msgstr, final Sep sep, final int index) {
 		// start field at 1 for MSH, 0 for others
 		int s = 1, f = 1, fr = 0, c = 1, sc = 1;
@@ -176,7 +183,7 @@ public class Util {
 		return new Pos(s, f, fr, c, sc);
 	}
 	
-	/** get the indexes of the given primitive. field rep is 0 based, all others are 1 based */
+	/** get the character indexes of the given primitive */
 	public static int[] getIndex (final String msgstr, final Sep sep, final Pos pos) {
 		System.out.println("get indexes " + pos);
 		int[] indexes = new int[2];
