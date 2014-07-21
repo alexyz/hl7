@@ -77,7 +77,6 @@ class EditorPanel extends JPanel {
 			@Override
 			public void componentShown (ComponentEvent e) {
 				System.out.println("component shown");
-				textArea.setCaretPosition(0);
 				textArea.requestFocusInWindow();
 			}
 		});
