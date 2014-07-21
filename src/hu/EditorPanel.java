@@ -2,6 +2,7 @@ package hu;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Font;
 import java.awt.GridLayout;
 import java.awt.event.*;
@@ -16,7 +17,6 @@ import javax.swing.text.*;
 import ca.uhn.hl7v2.HL7Exception;
 
 class EditorPanel extends JPanel {
-	private static final Font MONO = new Font("monospaced", 0, 14);
 	private static final Color ERROR = new Color(255, 192, 192);
 	
 	private final JTextArea textArea = new JTextArea();
@@ -27,43 +27,60 @@ class EditorPanel extends JPanel {
 	
 	private Info info;
 	private File file;
+	private String messageVersion;
 	
 	public EditorPanel () {
 		super(new BorderLayout());
+		
 		textArea.setBorder(new TitledBorder("Area"));
-		textArea.setFont(MONO);
 		textArea.setLineWrap(true);
 		textArea.addCaretListener(new CaretListener() {
 			@Override
 			public void caretUpdate (CaretEvent ce) {
-				caretUpdated(Math.min(ce.getMark(), ce.getDot()));
+				// avoid error when setting text before version
+				if (EditorPanel.this.isShowing()) {
+					caretUpdated(Math.min(ce.getMark(), ce.getDot()));
+				}
 			}
 		});
+		textArea.setTransferHandler(new TH());
+		
 		pathField.setBorder(new TitledBorder("Terser Path"));
-		pathField.setFont(MONO);
 		pathField.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed (ActionEvent e) {
 				pathUpdated();
 			}
 		});
+		
 		valueField.setBorder(new TitledBorder("Value"));
-		valueField.setFont(MONO);
 		valueField.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed (ActionEvent e) {
 				valueUpdated();
 			}
 		});
+		
+		descField.setBorder(new TitledBorder("Description"));
+		
+		JScrollPane textAreaScroller = new JScrollPane(textArea);
+		
 		JPanel fieldsPanel = new JPanel(new GridLayout(3, 1));
 		fieldsPanel.add(pathField);
 		fieldsPanel.add(valueField);
 		fieldsPanel.add(descField);
-		descField.setBorder(new TitledBorder("Description"));
-		descField.setFont(MONO);
-		JScrollPane textAreaScroller = new JScrollPane(textArea);
+		
 		add(textAreaScroller, BorderLayout.CENTER);
 		add(fieldsPanel, BorderLayout.SOUTH);
+		
+		addComponentListener(new ComponentAdapter() {
+			@Override
+			public void componentShown (ComponentEvent e) {
+				System.out.println("component shown");
+				textArea.setCaretPosition(0);
+				textArea.requestFocusInWindow();
+			}
+		});
 	}
 	
 	public File getFile () {
@@ -82,6 +99,26 @@ class EditorPanel extends JPanel {
 		textArea.setText(text);
 	}
 	
+	public Font getEditorFont (Font f) {
+		return textArea.getFont();
+	}
+
+	public void setEditorFont (Font f) {
+		System.out.println("set editor font " + f);
+		for (Component comp : Arrays.asList(textArea, pathField, valueField, descField)) {
+			comp.setFont(f);
+		}
+	}
+	
+	public String getMessageVersion () {
+		return messageVersion;
+	}
+
+	public void setMessageVersion (String version) {
+		this.messageVersion = version;
+		caretUpdated(textArea.getCaretPosition());
+	}
+
 	private void caretUpdated (int i) {
 		System.out.println("caret updated " + i);
 		String text = textArea.getText();
@@ -89,7 +126,7 @@ class EditorPanel extends JPanel {
 			return;
 		}
 		
-		info = MsgUtil.getInfo(text, i);
+		info = MsgUtil.getInfo(text, messageVersion, i);
 		if (info.pos != null) {
 			System.out.println("caret pos " + info.pos);
 		}
@@ -163,5 +200,5 @@ class EditorPanel extends JPanel {
 			}
 		}
 	}
-	
+
 }

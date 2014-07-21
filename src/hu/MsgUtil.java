@@ -15,12 +15,15 @@ import ca.uhn.hl7v2.validation.impl.ValidationContextFactory;
 public class MsgUtil {
 	
 	/** get info about the message and the index */
-	public static Info getInfo (final String msgstrLf, final int index) {
+	public static Info getInfo (final String msgstrLf, final String version, final int index) {
 		// parse the message
 		final String msgstr = msgstrLf.replace("\n", "\r");
 		HapiContext context = new DefaultHapiContext();
-		CanonicalModelClassFactory mcf = new CanonicalModelClassFactory("2.5");
-		context.setModelClassFactory(mcf);
+		
+		if (!version.equals(EditorJFrame.AUTO_VERSION)) {
+			CanonicalModelClassFactory mcf = new CanonicalModelClassFactory(version);
+			context.setModelClassFactory(mcf);
+		}
 		
 		Message msg;
 		try {

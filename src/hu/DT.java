@@ -16,7 +16,7 @@ final class DT extends DropTargetAdapter {
 			System.out.println("files=" + l);
 			for (Object o : l) {
 				if (o instanceof File) {
-					EditorJFrame.frame.addEditor((File) o);
+					EditorJFrame.getInstance().addFileEditor((File) o);
 				}
 			}
 		} catch (Exception e) {
