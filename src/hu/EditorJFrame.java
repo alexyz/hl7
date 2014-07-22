@@ -10,9 +10,6 @@ import java.util.List;
 
 import javax.swing.*;
 
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
-
 import ca.uhn.hl7v2.Version;
 
 /** main class and top level frame */
@@ -30,9 +27,7 @@ public class EditorJFrame extends JFrame {
 	}
 	
 	public static void main (String[] args) {
-		// stop hapi spamming the console
-		//Logger.getRootLogger().setLevel(Level.INFO);
-		System.out.println(System.getProperty("user.dir"));
+		System.out.println("user dir " + System.getProperty("user.dir"));
 		getInstance().setVisible(true);
 	}
 	
@@ -80,6 +75,14 @@ public class EditorJFrame extends JFrame {
 			@Override
 			public void actionPerformed (ActionEvent e) {
 				openFile();
+			}
+		});
+		
+		JMenuItem reopenItem = new JMenuItem("Re-open");
+		reopenItem.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed (ActionEvent e) {
+				reopenFile();
 			}
 		});
 		
@@ -145,6 +148,7 @@ public class EditorJFrame extends JFrame {
 		JMenu fileMenu = new JMenu("File");
 		fileMenu.add(newItem);
 		fileMenu.add(openItem);
+		fileMenu.add(reopenItem);
 		fileMenu.add(saveItem);
 		fileMenu.add(closeItem);
 		
@@ -186,13 +190,27 @@ public class EditorJFrame extends JFrame {
 	}
 	
 	private void openFile () {
-		System.out.println("open file in editor " + dir);
+		System.out.println("open file in new editor " + dir);
 		JFileChooser fc = new JFileChooser();
 		fc.setCurrentDirectory(dir);
 		fc.setMultiSelectionEnabled(false);
 		if (fc.showOpenDialog(EditorJFrame.this) == JFileChooser.APPROVE_OPTION) {
 			addFileEditor(fc.getSelectedFile());
 			dir = fc.getCurrentDirectory();
+		}
+	}
+	
+	private void reopenFile () {
+		System.out.println("reopen file in current editor");
+		EditorPanel ep = (EditorPanel) tabs.getSelectedComponent();
+		if (ep != null) {
+			File file = ep.getFile();
+			if (file != null) {
+				if (JOptionPane.showConfirmDialog(this, "Re-open file?", "Re-open", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
+					String text = FileUtil.readFile(file);
+					ep.setText(text);
+				}
+			}
 		}
 	}
 	
@@ -220,7 +238,12 @@ public class EditorJFrame extends JFrame {
 	
 	private void closeCurrentEditor () {
 		System.out.println("close current editor");
-		tabs.remove(tabs.getSelectedComponent());
+		EditorPanel ep = (EditorPanel) tabs.getSelectedComponent();
+		if (ep != null) {
+			if (JOptionPane.showConfirmDialog(this, "Close editor?", "Close", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
+				tabs.remove(ep);
+			}
+		}
 	}
 	
 	private void setFontSizes (int size) {

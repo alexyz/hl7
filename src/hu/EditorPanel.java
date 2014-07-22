@@ -43,7 +43,6 @@ class EditorPanel extends JPanel {
 				}
 			}
 		});
-		textArea.setTransferHandler(new TH());
 		
 		pathField.setBorder(new TitledBorder("Terser Path"));
 		pathField.addActionListener(new ActionListener() {

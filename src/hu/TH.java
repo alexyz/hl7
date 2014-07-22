@@ -7,7 +7,10 @@ import java.util.List;
 
 import javax.swing.TransferHandler;
 
-final class TH extends TransferHandler {
+/**
+ * don't add this to text areas because it breaks cut and paste
+ */
+public class TH extends TransferHandler {
 	@Override
 	public boolean canImport (TransferSupport support) {
 		return true;
