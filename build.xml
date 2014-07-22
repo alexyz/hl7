@@ -11,7 +11,6 @@
 		<jar destfile="dist/hl7deps.jar">
 			<zipfileset src="lib/hapi-base-2.2.jar" />
 			<zipfileset src="lib/hapi-examples-2.2.jar" />
-			<zipfileset src="lib/hapi-hl7overhttp-2.2.jar" />
 			<zipfileset src="lib/hapi-structures-v21-2.2.jar" />
 			<zipfileset src="lib/hapi-structures-v22-2.2.jar" />
 			<zipfileset src="lib/hapi-structures-v23-2.2.jar" />

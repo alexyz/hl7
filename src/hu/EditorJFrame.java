@@ -31,7 +31,7 @@ public class EditorJFrame extends JFrame {
 	
 	public static void main (String[] args) {
 		// stop hapi spamming the console
-		Logger.getRootLogger().setLevel(Level.INFO);
+		//Logger.getRootLogger().setLevel(Level.INFO);
 		System.out.println(System.getProperty("user.dir"));
 		getInstance().setVisible(true);
 	}
