@@ -5,6 +5,9 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Font;
 import java.awt.GridLayout;
+import java.awt.Point;
+import java.awt.Toolkit;
+import java.awt.datatransfer.*;
 import java.awt.event.*;
 import java.io.File;
 import java.util.*;
@@ -42,6 +45,21 @@ class EditorPanel extends JPanel {
 					caretUpdated(Math.min(ce.getMark(), ce.getDot()));
 				}
 			}
+		});
+		textArea.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mousePressed (MouseEvent e) {
+				if (e.isPopupTrigger()) {
+					popup(e.getPoint());
+				}
+			}
+			@Override
+			public void mouseReleased (MouseEvent e) {
+				if (e.isPopupTrigger()) {
+					popup(e.getPoint());
+				}
+			}
+			
 		});
 		
 		pathField.setBorder(new TitledBorder("Terser Path"));
@@ -97,10 +115,10 @@ class EditorPanel extends JPanel {
 		textArea.setText(text);
 	}
 	
-	public Font getEditorFont (Font f) {
+	public Font getEditorFont () {
 		return textArea.getFont();
 	}
-
+	
 	public void setEditorFont (Font f) {
 		System.out.println("set editor font " + f);
 		for (Component comp : Arrays.asList(textArea, pathField, valueField, descField)) {
@@ -111,12 +129,12 @@ class EditorPanel extends JPanel {
 	public String getMessageVersion () {
 		return messageVersion;
 	}
-
+	
 	public void setMessageVersion (String version) {
 		this.messageVersion = version;
 		caretUpdated(textArea.getCaretPosition());
 	}
-
+	
 	private void caretUpdated (int i) {
 		System.out.println("caret updated " + i);
 		String text = textArea.getText();
@@ -198,5 +216,71 @@ class EditorPanel extends JPanel {
 			}
 		}
 	}
+	
+	private void popup(Point p) {
+		JMenuItem cutItem = new JMenuItem("Cut");
+		cutItem.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed (ActionEvent ae) {
+				cutOrCopy(true);
+			}
+		});
+		JMenuItem copyItem = new JMenuItem("Copy");
+		copyItem.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed (ActionEvent ae) {
+				cutOrCopy(false);
+			}
+		});
+		JMenuItem pasteItem = new JMenuItem("Paste");
+		pasteItem.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed (ActionEvent ae) {
+				paste();
+			}
+		});
+		
+		JMenu setMenu = new JMenu("[path]");
+		// TODO based on type, add remove, random options
+		// possibly with same methods scripter will use
+		
+		JPopupMenu menu = new JPopupMenu("Editor");
+		menu.add(cutItem);
+		menu.add(copyItem);
+		menu.add(pasteItem);
+		menu.show(textArea, p.x, p.y);
+	}
 
+	private void cutOrCopy (boolean cut) {
+		System.out.println("cut or copy " + cut);
+		int s1 = textArea.getSelectionStart();
+		int s2 = textArea.getSelectionEnd();
+		if (s1 != s2) {
+			Clipboard clip = Toolkit.getDefaultToolkit().getSystemClipboard();
+			clip.setContents(new StringSelection(textArea.getSelectedText()), null);
+			if (cut) {
+				String text = textArea.getText();
+				textArea.setText(text.substring(0, s1) + text.substring(s2));
+				textArea.setCaretPosition(s1);
+			}
+		}
+	}
+	
+	private void paste () {
+		System.out.println("paste");
+		Clipboard clip = Toolkit.getDefaultToolkit().getSystemClipboard();
+		Transferable t = clip.getContents(null);
+		try {
+			String transText = (String) t.getTransferData(DataFlavor.stringFlavor);
+			if (transText != null) {
+				int s1 = textArea.getSelectionStart();
+				int s2 = textArea.getSelectionEnd();
+				String text = textArea.getText();
+				textArea.setText(text.substring(0, s1) + transText + text.substring(s2));
+				textArea.setCaretPosition(s2);
+			}
+		} catch (Exception e) {
+			throw new RuntimeException("could not paste", e);
+		}
+	}
 }
