@@ -1,14 +1,11 @@
 package hu;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.PrintWriter;
+import java.io.*;
 
 public class FileUtil {
-
-	public static String readFile(File file) {
+	
+	/** read file with lines separated by LF */
+	public static String readFile (File file) {
 		StringBuilder sb = new StringBuilder();
 		try (BufferedReader br = new BufferedReader(new FileReader(file))) {
 			String l;
@@ -21,9 +18,10 @@ public class FileUtil {
 		return sb.toString();
 	}
 	
+	/** write file with no interpretation of line terminator */
 	public static void writeFile (File file, String text) {
-		try (PrintWriter pw = new PrintWriter(new FileWriter(file))) {
-			pw.println(text);
+		try (FileWriter fw = new FileWriter(file)) {
+			fw.write(text.toCharArray());
 		} catch (Exception e) {
 			throw new RuntimeException("could not open file " + file, e);
 		}

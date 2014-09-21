@@ -15,48 +15,57 @@ import ca.uhn.hl7v2.validation.impl.ValidationContextFactory;
 public class MsgUtil {
 	
 	/** get info about the message and the index */
-	public static Info getInfo (final String msgstrLf, final String version, final int index) {
+	public static Info getInfo (final String msgLf, final String version, final int index) {
 		// parse the message
-		final String msgstr = msgstrLf.replace("\n", "\r");
-		HapiContext context = new DefaultHapiContext();
+		final String msgCr = msgLf.replace("\n", "\r");
+		// XXX closing this causes a null pointer exception
+		final HapiContext context = new DefaultHapiContext();
 		
 		if (!version.equals(EditorJFrame.AUTO_VERSION)) {
 			CanonicalModelClassFactory mcf = new CanonicalModelClassFactory(version);
 			context.setModelClassFactory(mcf);
 		}
 		
-		Message msg;
+		final Message msg;
+		
 		try {
 			PipeParser p = context.getPipeParser();
 			p.setValidationContext(ValidationContextFactory.noValidation());
-			msg = p.parse(msgstr);
+			msg = p.parse(msgCr);
+			
 		} catch (Exception e) {
 			System.out.println("could not parse message: " + e.toString());
 			//e.printStackTrace(System.out);
 			return new Info(e.getMessage());
 		}
 		
-		Terser t = new Terser(msg);
+		final Terser t = new Terser(msg);
 		
 		// do the validations
-		Sep sep;
+		final Sep sep;
 		try {
 			sep = new Sep(t);
 		} catch (HL7Exception e1) {
 			return new Info("could not get seperators");
 		}
 		
+		String msgVersion = msg.getVersion();
+		if (msgVersion == null) {
+			msgVersion = "2.6";
+		}
+		
 		List<VE> errors = null;
 		try {
-			ValidatingMessageVisitor vmv = new ValidatingMessageVisitor(msgstr, sep, "2.5");
+			ValidatingMessageVisitor vmv = new ValidatingMessageVisitor(msgCr, sep, msgVersion);
 			MessageVisitors.visit(msg, vmv);
 			errors = vmv.getErrors();
+			
 		} catch (Exception e) {
 			System.out.println("could not validate: " + e);
 		}
 		
 		// get the terser path for the index
-		Pos pos = getPosition(msgstr, sep, index);
+		Pos pos = getPosition(msgCr, sep, index);
 		TP tp = getTerserPath(msg, t, pos);
 		return new Info(msg, t, sep, pos, tp, errors);
 	}
@@ -161,32 +170,32 @@ public class MsgUtil {
 		int s = 1, f = 1, fr = 0, c = 1, sc = 1;
 		for (int i = 0; i < index; i++) {
 			char ch = msgstrCr.charAt(i);
-			if (ch == Sep.segSep) {
+			if (ch == Sep.SEGMENT) {
 				s++;
 				f = 0;
 				fr = 0;
 				c = 1;
 				sc = 1;
-			} else if (ch == sep.fieldSep) {
+			} else if (ch == sep.field) {
 				f++;
 				fr = 0;
 				c = 1;
 				sc = 1;
-			} else if (ch == sep.repSep) {
+			} else if (ch == sep.repetition) {
 				fr++;
 				c = 1;
 				sc = 1;
-			} else if (ch == sep.compSep) {
+			} else if (ch == sep.component) {
 				c++;
 				sc = 1;
-			} else if (ch == sep.subCompSep) {
+			} else if (ch == sep.subcomponent) {
 				sc++;
 			}
 		}
 		return new Pos(s, f, fr, c, sc);
 	}
 	
-	/** get the character indexes of the given primitive */
+	/** get the character indexes (start and end) of the given logical position */
 	public static int[] getIndex (final String msgstrCr, final Sep sep, final Pos pos) {
 		System.out.println("get indexes " + pos);
 		int[] indexes = new int[2];
@@ -194,29 +203,29 @@ public class MsgUtil {
 		int s = 1, f = 1, fr = 0, c = 1, sc = 1, l = 0;
 		for (int i = 0; i < msgstrCr.length(); i++) {
 			char ch = msgstrCr.charAt(i);
-			if (ch == Sep.segSep) {
+			if (ch == Sep.SEGMENT) {
 				s++;
 				f = 0;
 				fr = 0;
 				c = 1;
 				sc = 1;
 				l = 0;
-			} else if (ch == sep.fieldSep) {
+			} else if (ch == sep.field) {
 				f++;
 				fr = 0;
 				c = 1;
 				sc = 1;
 				l = 0;
-			} else if (ch == sep.repSep) {
+			} else if (ch == sep.repetition) {
 				fr++;
 				c = 1;
 				sc = 1;
 				l = 0;
-			} else if (ch == sep.compSep) {
+			} else if (ch == sep.component) {
 				c++;
 				sc = 1;
 				l = 0;
-			} else if (ch == sep.subCompSep) {
+			} else if (ch == sep.subcomponent) {
 				sc++;
 				l = 0;
 			} else {

@@ -10,7 +10,7 @@ import javax.swing.TransferHandler;
 /**
  * don't add this to text areas because it breaks cut and paste
  */
-public class TH extends TransferHandler {
+public class FileTransferHandler extends TransferHandler {
 	@Override
 	public boolean canImport (TransferSupport support) {
 		return true;

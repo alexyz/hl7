@@ -32,15 +32,16 @@ public class EditorJFrame extends JFrame {
 	}
 	
 	private final JTabbedPane tabs = new JTabbedPane();
+	
 	private File dir = new File(System.getProperty("user.dir"));
-	private Font editorFont = new Font("monospaced", 0, 14);
+	private Font editorFont = new Font("monospaced", 0, 12);
 	private String messageVersion = AUTO_VERSION;
 	
 	public EditorJFrame () {
 		super("HAPI HL7|^~\\&!");
 		setDefaultCloseOperation(EXIT_ON_CLOSE);
 		setJMenuBar(createMenu());
-		setTransferHandler(new TH());
+		setTransferHandler(new FileTransferHandler());
 		
 		tabs.addMouseListener(new MouseAdapter() {
 			@Override
@@ -51,7 +52,7 @@ public class EditorJFrame extends JFrame {
 				}
 			}
 		});
-		tabs.setTransferHandler(new TH());
+		tabs.setTransferHandler(new FileTransferHandler());
 		
 		addEditor();
 		
@@ -170,21 +171,24 @@ public class EditorJFrame extends JFrame {
 	}
 	
 	public void addEditor () {
-		addEditor("untitled", new EditorPanel());
+		EditorPanel ep = new EditorPanel();
+		ep.setEditorFont(editorFont);
+		ep.setMessageVersion(messageVersion);
+		addEditor("untitled", ep);
 	}
 	
 	public void addFileEditor (File file) {
-		String text = FileUtil.readFile(file);
+		String msgLf = FileUtil.readFile(file);
 		EditorPanel ep = new EditorPanel();
+		ep.setEditorFont(editorFont);
+		ep.setMessageVersion(messageVersion);
 		ep.setFile(file);
-		ep.setText(text);
+		ep.setMessage(msgLf);
 		addEditor(file.getName(), ep);
 	}
 	
 	private void addEditor (String name, EditorPanel ep) {
-		ep.setTransferHandler(new TH());
-		ep.setEditorFont(editorFont);
-		ep.setMessageVersion(messageVersion);
+		ep.setTransferHandler(new FileTransferHandler());
 		tabs.addTab(name, ep);
 		tabs.setSelectedComponent(ep);
 	}
@@ -208,7 +212,7 @@ public class EditorJFrame extends JFrame {
 			if (file != null) {
 				if (JOptionPane.showConfirmDialog(this, "Re-open file?", "Re-open", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
 					String text = FileUtil.readFile(file);
-					ep.setText(text);
+					ep.setMessage(text);
 				}
 			}
 		}
@@ -229,7 +233,7 @@ public class EditorJFrame extends JFrame {
 				dir = fc.getCurrentDirectory();
 				// this bit might fail
 				File file = fc.getSelectedFile();
-				FileUtil.writeFile(file, ep.getText());
+				FileUtil.writeFile(file, ep.getMessage().replace('\n', Sep.SEGMENT));
 				ep.setFile(file);
 				tabs.setTitleAt(tabs.getSelectedIndex(), file.getName());
 			}

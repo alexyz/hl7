@@ -63,6 +63,7 @@ public class ValidatingMessageVisitor extends MessageVisitorAdapter {
 		return true;
 	}
 	
+	/** get the list of errors, maybe empty, never null */
 	public List<VE> getErrors () {
 		return errors;
 	}

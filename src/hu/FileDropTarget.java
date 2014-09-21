@@ -5,7 +5,7 @@ import java.awt.dnd.*;
 import java.io.File;
 import java.util.List;
 
-final class DT extends DropTargetAdapter {
+final class FileDropTarget extends DropTargetAdapter {
 	@Override
 	public synchronized void drop (DropTargetDropEvent dtde) {
 		System.out.println("drop " + dtde);

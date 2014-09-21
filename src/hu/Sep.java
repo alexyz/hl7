@@ -6,18 +6,19 @@ import ca.uhn.hl7v2.util.Terser;
 /** represents separator characters in a message */
 public class Sep {
 
-	public static final char segSep = '\r';
-	public final char fieldSep;
-	public final char repSep;
-	public final char compSep;
-	public final char subCompSep;
+	/** segment separator, always a carriage return */
+	public static final char SEGMENT = '\r';
+	public final char field;
+	public final char repetition;
+	public final char component;
+	public final char subcomponent;
 	
 	public Sep (Terser t) throws HL7Exception {
 		String msh1 = t.get("/MSH-1");
 		String msh2 = t.get("/MSH-2");
-		fieldSep = msh1.charAt(0);
-		repSep = msh2.charAt(1);
-		compSep = msh2.charAt(0);
-		subCompSep = msh2.charAt(3);
+		field = msh1.charAt(0);
+		repetition = msh2.charAt(1);
+		component = msh2.charAt(0);
+		subcomponent = msh2.charAt(3);
 	}
 }

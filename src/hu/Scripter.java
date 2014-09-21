@@ -38,7 +38,7 @@ public class Scripter {
 			throw new Exception("file " + f.getAbsolutePath() + " not found");
 		}
 		String msgstrLf = FileUtil.readFile(f);
-		String msgstr = msgstrLf.replace('\n', Sep.segSep);
+		String msgstr = msgstrLf.replace('\n', Sep.SEGMENT);
 		HapiContext context = new DefaultHapiContext();
 		if (!version.equals("undefined")) {
 			CanonicalModelClassFactory mcf = new CanonicalModelClassFactory(version);
