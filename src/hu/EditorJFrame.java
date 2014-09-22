@@ -48,7 +48,7 @@ public class EditorJFrame extends JFrame {
 			public void mouseClicked (MouseEvent e) {
 				if (e.getClickCount() >= 2) {
 					System.out.println("mouse click " + e.getClickCount());
-					addEditor("untitled", new EditorPanel());
+					addEditor();
 				}
 			}
 		});
@@ -172,22 +172,21 @@ public class EditorJFrame extends JFrame {
 	
 	public void addEditor () {
 		EditorPanel ep = new EditorPanel();
-		ep.setEditorFont(editorFont);
-		ep.setMessageVersion(messageVersion);
+		ep.setMsgVersion(messageVersion);
 		addEditor("untitled", ep);
 	}
 	
 	public void addFileEditor (File file) {
 		String msgLf = FileUtil.readFile(file);
 		EditorPanel ep = new EditorPanel();
-		ep.setEditorFont(editorFont);
-		ep.setMessageVersion(messageVersion);
+		ep.setMsgVersion(messageVersion);
 		ep.setFile(file);
 		ep.setMessage(msgLf);
 		addEditor(file.getName(), ep);
 	}
 	
 	private void addEditor (String name, EditorPanel ep) {
+		ep.setEditorFont(editorFont);
 		ep.setTransferHandler(new FileTransferHandler());
 		tabs.addTab(name, ep);
 		tabs.setSelectedComponent(ep);
@@ -265,7 +264,7 @@ public class EditorJFrame extends JFrame {
 		messageVersion = version;
 		for (Component comp : tabs.getComponents()) {
 			if (comp instanceof EditorPanel) {
-				((EditorPanel) comp).setMessageVersion(version);
+				((EditorPanel) comp).setMsgVersion(version);
 			}
 		}
 	}

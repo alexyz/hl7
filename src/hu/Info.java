@@ -7,27 +7,14 @@ import ca.uhn.hl7v2.util.Terser;
 
 class Info {
 	public final Message msg;
-	public final Terser t;
-	public final Pos pos;
-	public final TP tp;
-	public final List<VE> errors;
+	public final Terser terser;
 	public final Sep sep;
-	
-	public Info (String error) {
-		this.msg = null;
-		this.t = null;
-		this.pos = null;
-		this.tp = new TP(error, "", "");
-		this.errors = null;
-		this.sep = null;
-	}
+	public final String msgCr;
 
-	public Info (Message msg, Terser t, Sep sep, Pos pos, TP tp, List<VE> errors) {
+	public Info (Message msg, Terser t, Sep sep, String msgCr) {
 		this.msg = msg;
-		this.t = t;
+		this.terser = t;
 		this.sep = sep;
-		this.pos = pos;
-		this.tp = tp;
-		this.errors = errors;
+		this.msgCr = msgCr;
 	}
 }

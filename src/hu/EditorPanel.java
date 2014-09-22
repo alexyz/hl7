@@ -17,28 +17,25 @@ import javax.swing.border.TitledBorder;
 import javax.swing.event.*;
 import javax.swing.text.*;
 
-import ca.uhn.hl7v2.HL7Exception;
-
 class EditorPanel extends JPanel {
 	private static final Color ERROR = new Color(255, 192, 192);
 	
 	/** message area, always represent segments separators as line feeds */
-	private final JTextArea messageArea = new JTextArea();
+	private final JTextArea msgArea = new JTextArea();
 	private final JTextArea descriptionArea = new JTextArea(3, 40);
 	private final JTextField pathField = new JTextField();
 	private final JTextField valueField = new JTextField();
 	private final List<Object> highlights = new ArrayList<>();
 	
-	private Info info;
 	private File file;
-	private String messageVersion;
+	private String msgVersion;
 	
 	public EditorPanel () {
 		super(new BorderLayout());
 		
-		messageArea.setBorder(new TitledBorder("Message"));
-		messageArea.setLineWrap(true);
-		messageArea.addCaretListener(new CaretListener() {
+		msgArea.setBorder(new TitledBorder("Message"));
+		msgArea.setLineWrap(true);
+		msgArea.addCaretListener(new CaretListener() {
 			@Override
 			public void caretUpdate (CaretEvent ce) {
 				// avoid error when setting text before version
@@ -47,7 +44,7 @@ class EditorPanel extends JPanel {
 				}
 			}
 		});
-		messageArea.addMouseListener(new MouseAdapter() {
+		msgArea.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mousePressed (MouseEvent e) {
 				if (e.isPopupTrigger()) {
@@ -64,8 +61,16 @@ class EditorPanel extends JPanel {
 			
 		});
 		
-		pathField.setBorder(new TitledBorder("Terser Path"));
+		pathField.setBorder(new TitledBorder("HAPI Terser Path"));
 		pathField.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed (ActionEvent e) {
+				pathUpdated();
+			}
+		});
+		
+		JButton pathButton = new JButton("Get");
+		pathButton.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed (ActionEvent e) {
 				pathUpdated();
@@ -80,30 +85,46 @@ class EditorPanel extends JPanel {
 			}
 		});
 		
+		JButton valueButton = new JButton("Set");
+		valueButton.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed (ActionEvent e) {
+				valueUpdated();
+			}
+		});
+		
 		JScrollPane descScroller = new JScrollPane(descriptionArea);
 		descScroller.setBorder(new TitledBorder("Description"));
 		
-		JScrollPane textAreaScroller = new JScrollPane(messageArea);
+		JScrollPane msgScroller = new JScrollPane(msgArea);
 		
 		descriptionArea.setLineWrap(true);
 		descriptionArea.setEditable(false);
 		
+		JPanel pathPanel = new JPanel(new BorderLayout());
+		pathPanel.add(pathField, BorderLayout.CENTER);
+		pathPanel.add(pathButton, BorderLayout.EAST);
+		
+		JPanel valuePanel = new JPanel(new BorderLayout());
+		valuePanel.add(valueField, BorderLayout.CENTER);
+		valuePanel.add(valueButton, BorderLayout.EAST);
+		
 		JPanel fieldsPanelNorth = new JPanel(new GridLayout(2, 1));
-		fieldsPanelNorth.add(pathField);
-		fieldsPanelNorth.add(valueField);
+		fieldsPanelNorth.add(pathPanel);
+		fieldsPanelNorth.add(valuePanel);
 		
 		JPanel fieldsPanel = new JPanel(new BorderLayout());
 		fieldsPanel.add(fieldsPanelNorth, BorderLayout.NORTH);
 		fieldsPanel.add(descScroller, BorderLayout.CENTER);
 		
-		add(textAreaScroller, BorderLayout.CENTER);
+		add(msgScroller, BorderLayout.CENTER);
 		add(fieldsPanel, BorderLayout.SOUTH);
 		
 		addComponentListener(new ComponentAdapter() {
 			@Override
 			public void componentShown (ComponentEvent e) {
 				System.out.println("component shown");
-				messageArea.requestFocusInWindow();
+				msgArea.requestFocusInWindow();
 			}
 		});
 	}
@@ -117,131 +138,137 @@ class EditorPanel extends JPanel {
 	}
 	
 	public String getMessage () {
-		return messageArea.getText();
+		return msgArea.getText();
 	}
 	
 	public void setMessage (String msgLf) {
-		messageArea.setText(msgLf);
-		messageArea.setCaretPosition(0);
+		msgArea.setText(msgLf);
+		msgArea.setCaretPosition(0);
 		messageAreaCaretUpdated(0);
 	}
 	
 	public Font getEditorFont () {
-		return messageArea.getFont();
+		return msgArea.getFont();
 	}
 	
 	public void setEditorFont (Font f) {
 		System.out.println("set editor font " + f);
-		for (Component comp : Arrays.asList(messageArea, pathField, valueField, descriptionArea)) {
+		for (Component comp : Arrays.asList(msgArea, pathField, valueField, descriptionArea)) {
 			comp.setFont(f);
 		}
 	}
 	
-	public String getMessageVersion () {
-		return messageVersion;
+	public String getMsgVersion () {
+		return msgVersion;
 	}
 	
-	public void setMessageVersion (String messageVersion) {
-		this.messageVersion = messageVersion;
-		messageAreaCaretUpdated(messageArea.getCaretPosition());
+	public void setMsgVersion (String messageVersion) {
+		this.msgVersion = messageVersion;
+		messageAreaCaretUpdated(msgArea.getCaretPosition());
 	}
 	
 	private void messageAreaCaretUpdated (int i) {
 		System.out.println("caret updated " + i);
-		String text = messageArea.getText();
-		if (text.length() == 0) {
+		
+		String msgLf = msgArea.getText();
+		if (msgLf.length() == 0) {
 			return;
 		}
 		
-		info = MsgUtil.getInfo(text, messageVersion, i);
-		if (info.pos != null) {
-			System.out.println("caret pos " + info.pos);
-		}
-		
-		// do the error highlighting
-		String currentError = null;
-		if (info.errors != null) {
-			Highlighter h = messageArea.getHighlighter();
+		try {
+			Info info = MsgUtil.getInfo(msgLf, msgVersion);
+			List<VE> errors = MsgUtil.getErrors(info.msg, info.msgCr, info.sep, msgVersion);
+			Pos pos = MsgUtil.getPosition(info.msgCr, info.sep, i);
+			
+			// do the error highlighting
+			Highlighter h = msgArea.getHighlighter();
 			for (Object o : highlights) {
 				h.removeHighlight(o);
 			}
 			highlights.clear();
-			for (VE ve : info.errors) {
-				if (ve.pos.equals(info.pos)) {
+			
+			String currentError = null;
+			for (VE ve : errors) {
+				if (ve.pos.equals(pos)) {
 					currentError = ve.msg;
 				}
-				try {
-					System.out.println("add highlight " + ve.indexes[0] + ", " + ve.indexes[1]);
-					highlights.add(h.addHighlight(ve.indexes[0], ve.indexes[1], new DefaultHighlighter.DefaultHighlightPainter(ERROR)));
-				} catch (BadLocationException e) {
-					throw new RuntimeException(e);
+				System.out.println("add highlight " + ve.indexes[0] + ", " + ve.indexes[1]);
+				highlights.add(h.addHighlight(ve.indexes[0], ve.indexes[1], new DefaultHighlighter.DefaultHighlightPainter(ERROR)));
+			}
+			
+			// populate the fields
+			TP terserPath = MsgUtil.getTerserPath(info.msg, info.terser, pos);
+			if (terserPath != null) {
+				if (!pathField.getText().equals(terserPath.path)) {
+					pathField.setText(terserPath.path);
+				}
+				if (!valueField.getText().equals(terserPath.value)) {
+					valueField.setText(terserPath.value);
+				}
+				String desc = terserPath.description;
+				if (currentError != null) {
+					desc += " \u2192 " + currentError;
+				}
+				if (!descriptionArea.getText().equals(desc)) {
+					descriptionArea.setText(desc);
 				}
 			}
+			
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+			descriptionArea.setText(e.toString());
 		}
-		
-		// populate the fields
-		if (info.tp != null) {
-			if (!pathField.getText().equals(info.tp.path)) {
-				pathField.setText(info.tp.path);
-			}
-			if (!valueField.getText().equals(info.tp.value)) {
-				valueField.setText(info.tp.value);
-			}
-			String desc = info.tp.description;
-			if (currentError != null) {
-				desc += " -> " + currentError;
-			}
-			if (!descriptionArea.getText().equals(desc)) {
-				descriptionArea.setText(desc);
-			}
-		}
-		
 	}
 	
 	private void pathUpdated () {
 		System.out.println("path updated");
-		if (info != null && info.t != null) {
-			try {
-				String value = info.t.get(pathField.getText());
-				valueField.setText(value);
-			} catch (HL7Exception e1) {
-				descriptionArea.setText(e1.getMessage());
-			}
+		
+		try {
+			Info info = MsgUtil.getInfo(msgArea.getText(), msgVersion);
+			String value = info.terser.get(pathField.getText());
+			valueField.setText(value);
+			// TODO update description, caret (if bounded!)
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+			descriptionArea.setText(e.toString());
 		}
 	}
 	
 	private void valueUpdated () {
 		System.out.println("value updated");
 		
-		if (info != null) {
-			String msgCr = messageArea.getText().replace('\n', Sep.SEGMENT);
-			int[] i1 = MsgUtil.getIndex(msgCr, info.sep, info.pos);
-			msgCr = msgCr.substring(0, i1[0]) + valueField.getText() + msgCr.substring(i1[1]);
+		try {
+			String msgLf = msgArea.getText();
+			Info info = MsgUtil.getInfo(msgLf, msgVersion);
+			// XXX caret might not represent value position
+			Pos pos = MsgUtil.getPosition(info.msgCr, info.sep, msgArea.getCaretPosition());
 			
-			Pos pos = info.pos;
-			messageArea.setText(msgCr.replace(Sep.SEGMENT, '\n'));
+			if (pos.segOrd == 1 && pos.fieldOrd <= 2) {
+				// need to use terser for these
+				System.out.println("update msh-1 or msh-2 field");
+				info.terser.set(pathField.getText(), valueField.getText());
+				String msgCr = info.msg.encode();
+				msgArea.setText(msgCr.replace(Sep.SEGMENT, '\n'));
+				
+			} else {
+				// simple string substitution
+				System.out.println("update none msh-1 or msh-2 field");
+				int[] i1 = MsgUtil.getIndex(info.msgCr, info.sep, pos);
+				
+				msgLf = msgLf.substring(0, i1[0]) + valueField.getText() + msgLf.substring(i1[1]);
+				
+				msgArea.setText(msgLf);
+				
+				int[] i2 = MsgUtil.getIndex(info.msgCr, info.sep, pos);
+				msgArea.setCaretPosition(i2[1]);
+			}
 			
-			int[] i2 = MsgUtil.getIndex(msgCr, info.sep, pos);
-			System.out.println("caret to " + i2[1]);
-			messageArea.setCaretPosition(i2[1]);
+		} catch (Exception e) {
+			e.printStackTrace();
+			descriptionArea.setText(e.toString());
 		}
-		
-		// FIXME should use terser if changing MSH-1 or MSH-2 only
-		// if (info != null && info.t != null) {
-		// try {
-		// info.t.set(pathField.getText(), valueField.getText());
-		// String msgstr = info.msg.encode();
-		// Pos pos = info.pos;
-		// // this will update info
-		// msgArea.setText(msgstr.replace(Sep.segSep, '\n'));
-		// int[] index = MsgUtil.getIndex(msgstr, info.sep, pos);
-		// System.out.println("caret to " + index[1]);
-		// msgArea.setCaretPosition(index[1]);
-		//
-		// } catch (HL7Exception e1) {
-		// descArea.setText(e1.getMessage());
-		// }
-		// }
 	}
 	
 	private void popup (Point p) {
@@ -271,20 +298,20 @@ class EditorPanel extends JPanel {
 		menu.add(cutItem);
 		menu.add(copyItem);
 		menu.add(pasteItem);
-		menu.show(messageArea, p.x, p.y);
+		menu.show(msgArea, p.x, p.y);
 	}
 	
 	private void cutOrCopy (boolean cut) {
 		System.out.println("cut or copy " + cut);
-		int s1 = messageArea.getSelectionStart();
-		int s2 = messageArea.getSelectionEnd();
+		int s1 = msgArea.getSelectionStart();
+		int s2 = msgArea.getSelectionEnd();
 		if (s1 != s2) {
 			Clipboard clip = Toolkit.getDefaultToolkit().getSystemClipboard();
-			clip.setContents(new StringSelection(messageArea.getSelectedText()), null);
+			clip.setContents(new StringSelection(msgArea.getSelectedText()), null);
 			if (cut) {
-				String text = messageArea.getText();
-				messageArea.setText(text.substring(0, s1) + text.substring(s2));
-				messageArea.setCaretPosition(s1);
+				String text = msgArea.getText();
+				msgArea.setText(text.substring(0, s1) + text.substring(s2));
+				msgArea.setCaretPosition(s1);
 			}
 		}
 	}
@@ -296,11 +323,11 @@ class EditorPanel extends JPanel {
 		try {
 			String transText = (String) t.getTransferData(DataFlavor.stringFlavor);
 			if (transText != null) {
-				int s1 = messageArea.getSelectionStart();
-				int s2 = messageArea.getSelectionEnd();
-				String text = messageArea.getText();
-				messageArea.setText(text.substring(0, s1) + transText + text.substring(s2));
-				messageArea.setCaretPosition(s2);
+				int s1 = msgArea.getSelectionStart();
+				int s2 = msgArea.getSelectionEnd();
+				String text = msgArea.getText();
+				msgArea.setText(text.substring(0, s1) + transText + text.substring(s2));
+				msgArea.setCaretPosition(s2);
 			}
 		} catch (Exception e) {
 			throw new RuntimeException("could not paste", e);

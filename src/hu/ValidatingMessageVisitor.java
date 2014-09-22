@@ -21,8 +21,11 @@ public class ValidatingMessageVisitor extends MessageVisitorAdapter {
 	
 	private int segOrd;
 	
-	public ValidatingMessageVisitor (String msgstr, Sep sep, String version) {
-		this.msgstr = msgstr;
+	/**
+	 * msgCr - reference for getting index of errors
+	 */
+	public ValidatingMessageVisitor (String msgCr, Sep sep, String version) {
+		this.msgstr = msgCr;
 		this.sep = sep;
 		this.version = version;
 	}
