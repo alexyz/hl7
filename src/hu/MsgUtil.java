@@ -50,25 +50,40 @@ public class MsgUtil {
 	public static List<VE> getErrors (Message msg, String msgCr, Sep sep, String msgVersion) throws Exception {
 		ValidatingMessageVisitor vmv = new ValidatingMessageVisitor(msgCr, sep, msgVersion);
 		MessageVisitors.visit(msg, vmv);
-		List<VE> errors = vmv.getErrors();
-		
-		return errors;
+		return vmv.getErrors();
 	}
 	
 	/** get the terser path for the message position */
 	public static TP getTerserPath (final Message msg, final Terser t, final Pos pos) throws Exception {
 		SL sl = getSegmentLocation(msg, pos.segOrd);
-		String path = "";
+		StringBuilder pathSb = new StringBuilder();
 		String desc = "";
 		String value = "";
+		String path = "";
 		
 		if (sl != null) {
-			path = sl.location.toString() + "-" + pos.fieldOrd + (pos.fieldRep > 0 ? "(" + pos.fieldRep + ")" : "") + (pos.compOrd > 1 ? "-" + pos.compOrd : "") + (pos.subCompOrd > 1 ? "-" + pos.subCompOrd : "");
+			pathSb.append(sl.location.toString());
+			if (pos.fieldOrd > 0) {
+				pathSb.append("-" + pos.fieldOrd);
+				if (pos.fieldRep > 0) {
+					pathSb.append("(" + pos.fieldRep + ")");
+				}
+				if (pos.compOrd > 1 || pos.subCompOrd > 1) {
+					pathSb.append("-" + pos.compOrd);
+					if (pos.subCompOrd > 1) {
+						pathSb.append("-" + pos.subCompOrd);
+					}
+				}
+			}
+			path = pathSb.toString();
 			desc = getDescription(sl.segment, pos);
-			try {
-				value = t.get(path);
-			} catch (Exception e) {
-				throw new Exception("can't get path " + path, e);
+			
+			if (pos.fieldOrd > 0) {
+				try {
+					value = t.get(path);
+				} catch (Exception e) {
+					throw new Exception("can't get path " + path, e);
+				}
 			}
 		}
 		
@@ -180,58 +195,70 @@ public class MsgUtil {
 				sc++;
 			}
 		}
+		
 		return new Pos(s, f, fr, c, sc);
 	}
 	
 	/** get the character indexes (start and end) of the given logical position */
-	public static int[] getIndex (final String msgstrCr, final Sep sep, final Pos pos) {
-		System.out.println("get indexes " + pos);
-		if (msgstrCr.contains("\n")) {
+	public static int[] getIndex (final String msgCr, final Sep sep, final Pos pos) {
+		System.out.println("get indexes: " + msgCr.length() + ", " + pos);
+		
+		if (msgCr.contains("\n")) {
 			throw new RuntimeException("getIndex requires msgCr");
 		}
 		
-		int[] indexes = new int[2];
+		final int[] indexes = new int[2];
+		
 		// start field at 1 for MSH, 0 for others
-		int s = 1, f = 1, fr = 0, c = 1, sc = 1, l = 0;
-		for (int i = 0; i < msgstrCr.length(); i++) {
-			char ch = msgstrCr.charAt(i);
+		int s = 1, f = 1, r = 0, c = 1, sc = 1, len = 0;
+		
+		for (int i = 0; i < msgCr.length(); i++) {
+			char ch = msgCr.charAt(i);
 			if (ch == Sep.SEGMENT) {
 				s++;
 				f = 0;
-				fr = 0;
+				r = 0;
 				c = 1;
 				sc = 1;
-				l = 0;
+				len = 0;
+				
 			} else if (ch == sep.field) {
 				f++;
-				fr = 0;
+				r = 0;
 				c = 1;
 				sc = 1;
-				l = 0;
+				len = 0;
+				
 			} else if (ch == sep.repetition) {
-				fr++;
+				r++;
 				c = 1;
 				sc = 1;
-				l = 0;
+				len = 0;
+				
 			} else if (ch == sep.component) {
 				c++;
 				sc = 1;
-				l = 0;
+				len = 0;
+				
 			} else if (ch == sep.subcomponent) {
 				sc++;
-				l = 0;
+				len = 0;
+				
 			} else {
-				l++;
+				len++;
 			}
-			//System.out.println(String.format("s %d f %d fr %d c %d sc %d l %d", s, f, fr, c, sc, l));
-			if (s == pos.segOrd && f == pos.fieldOrd && fr == pos.fieldRep && c == pos.compOrd && sc == pos.subCompOrd) {
-				//System.out.println("char: " + ch);
+			
+			//System.out.println(String.format("getIndexes: ch %x s %d f %d fr %d c %d sc %d len %d", (int) ch, s, f, r, c, sc, len));
+			
+			if (s == pos.segOrd && f == pos.fieldOrd && r == pos.fieldRep && c == pos.compOrd && sc == pos.subCompOrd) {
+				//System.out.println("matched");
 				if (indexes[0] == 0) {
 					indexes[0] = i + 1;
 				}
-				indexes[1] = indexes[0] + l;
+				indexes[1] = indexes[0] + len;
 			}
 		}
+		
 		return indexes;
 	}
 	

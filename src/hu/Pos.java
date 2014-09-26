@@ -2,8 +2,16 @@ package hu;
 
 /** a logical position in a message */
 class Pos implements Comparable<Pos> {
-	public final int segOrd, fieldOrd, fieldRep, compOrd, subCompOrd;
+	public final int segOrd;
+	/** field ordinal - can actually be 0 (no field selected) */
+	public final int fieldOrd;
+	public final int fieldRep;
+	public final int compOrd;
+	public final int subCompOrd;
 	public Pos (int segOrd, int fieldOrd, int fieldRep, int compOrd, int subCompOrd) {
+		if (!(segOrd >= 1 || fieldOrd >= 0 || fieldRep >= 0 || compOrd >= 1 || subCompOrd >= 1)) {
+			throw new RuntimeException(String.format("invalid position: seg %d >= 1 field %d >= 0 rep %d >= 0 comp %d >= 1 subcomp %d >= 1", segOrd, fieldOrd, fieldRep, compOrd, subCompOrd));
+		}
 		this.segOrd = segOrd;
 		this.fieldOrd = fieldOrd;
 		this.fieldRep = fieldRep;

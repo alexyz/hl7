@@ -17,7 +17,7 @@ import javax.swing.border.TitledBorder;
 import javax.swing.event.*;
 import javax.swing.text.*;
 
-class EditorPanel extends JPanel {
+public class EditorJPanel extends JPanel {
 	private static final Color ERROR = new Color(255, 192, 192);
 	
 	/** message area, always represent segments separators as line feeds */
@@ -30,7 +30,7 @@ class EditorPanel extends JPanel {
 	private File file;
 	private String msgVersion;
 	
-	public EditorPanel () {
+	public EditorJPanel () {
 		super(new BorderLayout());
 		
 		msgArea.setBorder(new TitledBorder("Message"));
@@ -39,8 +39,9 @@ class EditorPanel extends JPanel {
 			@Override
 			public void caretUpdate (CaretEvent ce) {
 				// avoid error when setting text before version
-				if (EditorPanel.this.isShowing()) {
-					messageAreaCaretUpdated(Math.min(ce.getMark(), ce.getDot()));
+				if (EditorJPanel.this.isShowing()) {
+					//update(Math.min(ce.getMark(), ce.getDot()));
+					update();
 				}
 			}
 		});
@@ -144,7 +145,7 @@ class EditorPanel extends JPanel {
 	public void setMessage (String msgLf) {
 		msgArea.setText(msgLf);
 		msgArea.setCaretPosition(0);
-		messageAreaCaretUpdated(0);
+		update();
 	}
 	
 	public Font getEditorFont () {
@@ -164,28 +165,34 @@ class EditorPanel extends JPanel {
 	
 	public void setMsgVersion (String messageVersion) {
 		this.msgVersion = messageVersion;
-		messageAreaCaretUpdated(msgArea.getCaretPosition());
+		update();
 	}
 	
-	private void messageAreaCaretUpdated (int i) {
-		System.out.println("caret updated " + i);
+	private void update () {
+		System.out.println("update");
+		int i = msgArea.getCaretPosition();
 		
 		String msgLf = msgArea.getText();
 		if (msgLf.length() == 0) {
+			System.out.println("update: no message");
 			return;
 		}
 		
 		try {
-			Info info = MsgUtil.getInfo(msgLf, msgVersion);
-			List<VE> errors = MsgUtil.getErrors(info.msg, info.msgCr, info.sep, msgVersion);
-			Pos pos = MsgUtil.getPosition(info.msgCr, info.sep, i);
 			
-			// do the error highlighting
+			// clear error highlighting
 			Highlighter h = msgArea.getHighlighter();
 			for (Object o : highlights) {
 				h.removeHighlight(o);
 			}
 			highlights.clear();
+			
+			// do error highlighting
+			
+			final Info info = MsgUtil.getInfo(msgLf, msgVersion);
+			final Pos pos = MsgUtil.getPosition(info.msgCr, info.sep, i);
+			final List<VE> errors = MsgUtil.getErrors(info.msg, info.msgCr, info.sep, msgVersion);
+			System.out.println("errors: " + errors.size());
 			
 			String currentError = null;
 			for (VE ve : errors) {

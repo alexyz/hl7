@@ -171,21 +171,21 @@ public class EditorJFrame extends JFrame {
 	}
 	
 	public void addEditor () {
-		EditorPanel ep = new EditorPanel();
+		EditorJPanel ep = new EditorJPanel();
 		ep.setMsgVersion(messageVersion);
 		addEditor("untitled", ep);
 	}
 	
 	public void addFileEditor (File file) {
 		String msgLf = FileUtil.readFile(file);
-		EditorPanel ep = new EditorPanel();
+		EditorJPanel ep = new EditorJPanel();
 		ep.setMsgVersion(messageVersion);
 		ep.setFile(file);
 		ep.setMessage(msgLf);
 		addEditor(file.getName(), ep);
 	}
 	
-	private void addEditor (String name, EditorPanel ep) {
+	private void addEditor (String name, EditorJPanel ep) {
 		ep.setEditorFont(editorFont);
 		ep.setTransferHandler(new FileTransferHandler());
 		tabs.addTab(name, ep);
@@ -205,7 +205,7 @@ public class EditorJFrame extends JFrame {
 	
 	private void reopenFile () {
 		System.out.println("reopen file in current editor");
-		EditorPanel ep = (EditorPanel) tabs.getSelectedComponent();
+		EditorJPanel ep = (EditorJPanel) tabs.getSelectedComponent();
 		if (ep != null) {
 			File file = ep.getFile();
 			if (file != null) {
@@ -219,7 +219,7 @@ public class EditorJFrame extends JFrame {
 	
 	private void saveCurrentEditor () {
 		System.out.println("save current editor " + dir);
-		EditorPanel ep = (EditorPanel) tabs.getSelectedComponent();
+		EditorJPanel ep = (EditorJPanel) tabs.getSelectedComponent();
 		if (ep != null) {
 			JFileChooser fc = new JFileChooser();
 			fc.setMultiSelectionEnabled(false);
@@ -241,7 +241,7 @@ public class EditorJFrame extends JFrame {
 	
 	private void closeCurrentEditor () {
 		System.out.println("close current editor");
-		EditorPanel ep = (EditorPanel) tabs.getSelectedComponent();
+		EditorJPanel ep = (EditorJPanel) tabs.getSelectedComponent();
 		if (ep != null) {
 			if (JOptionPane.showConfirmDialog(this, "Close editor?", "Close", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
 				tabs.remove(ep);
@@ -253,8 +253,8 @@ public class EditorJFrame extends JFrame {
 		System.out.println("set editor font size " + size);
 		editorFont = new Font("monospaced", 0, size);
 		for (Component comp : tabs.getComponents()) {
-			if (comp instanceof EditorPanel) {
-				((EditorPanel) comp).setEditorFont(editorFont);
+			if (comp instanceof EditorJPanel) {
+				((EditorJPanel) comp).setEditorFont(editorFont);
 			}
 		}
 	}
@@ -263,8 +263,8 @@ public class EditorJFrame extends JFrame {
 		System.out.println("set editor version " + version);
 		messageVersion = version;
 		for (Component comp : tabs.getComponents()) {
-			if (comp instanceof EditorPanel) {
-				((EditorPanel) comp).setMsgVersion(version);
+			if (comp instanceof EditorJPanel) {
+				((EditorJPanel) comp).setMsgVersion(version);
 			}
 		}
 	}
