@@ -82,7 +82,7 @@ public class EditorJPanel extends JPanel {
 		valueField.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed (ActionEvent e) {
-				valueUpdated();
+				setValue();
 			}
 		});
 		
@@ -90,7 +90,7 @@ public class EditorJPanel extends JPanel {
 		valueButton.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed (ActionEvent e) {
-				valueUpdated();
+				setValue();
 			}
 		});
 		
@@ -243,34 +243,32 @@ public class EditorJPanel extends JPanel {
 		}
 	}
 	
-	private void valueUpdated () {
+	private void setValue () {
 		System.out.println("value updated");
+		// FIXME set value shouldn't update path (e.g. when setting value to blank)
+		// and should prob update description with error
 		
 		try {
 			String msgLf = msgArea.getText();
+			String path = pathField.getText();
 			Info info = MsgUtil.getInfo(msgLf, msgVersion);
-			// XXX caret might not represent value position
-			Pos pos = MsgUtil.getPosition(info.msgCr, info.sep, msgArea.getCaretPosition());
+			Pos pos = MsgUtil.getPosition(info.msg, info.terser, path);
 			
-			if (pos.segOrd == 1 && pos.fieldOrd <= 2) {
-				// need to use terser for these
-				System.out.println("update msh-1 or msh-2 field");
-				info.terser.set(pathField.getText(), valueField.getText());
-				String msgCr = info.msg.encode();
-				msgArea.setText(msgCr.replace(Sep.SEGMENT, '\n'));
-				
-			} else {
-				// simple string substitution
-				System.out.println("update none msh-1 or msh-2 field");
-				int[] i1 = MsgUtil.getIndex(info.msgCr, info.sep, pos);
-				
-				msgLf = msgLf.substring(0, i1[0]) + valueField.getText() + msgLf.substring(i1[1]);
-				
-				msgArea.setText(msgLf);
-				
-				int[] i2 = MsgUtil.getIndex(info.msgCr, info.sep, pos);
-				msgArea.setCaretPosition(i2[1]);
+			info.terser.set(path, valueField.getText());
+			
+			// re-encode the whole message...
+			
+			String msgCr = info.msg.encode();
+			Info info2 = MsgUtil.getInfo(msgLf, msgVersion);
+			
+			msgArea.setText(msgCr.replace(Sep.SEGMENT, '\n'));
+			
+			int[] i = MsgUtil.getIndex(msgCr, info2.sep, pos);
+			if (i[1] > 0) {
+				msgArea.setCaretPosition(i[1]);
 			}
+			
+			update();
 			
 		} catch (Exception e) {
 			e.printStackTrace();

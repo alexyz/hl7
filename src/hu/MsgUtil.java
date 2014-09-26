@@ -39,15 +39,13 @@ public class MsgUtil {
 		// do the validations
 		final Sep sep = new Sep(terser);
 		
-		String msgVersion = msg.getVersion();
-		if (msgVersion == null) {
-			msgVersion = "2.6";
-		}
-		
 		return new Info(msg, terser, sep, msgCr);
 	}
 	
 	public static List<VE> getErrors (Message msg, String msgCr, Sep sep, String msgVersion) throws Exception {
+		if (msgVersion.equals(EditorJFrame.AUTO_VERSION)) {
+			msgVersion = msg.getVersion();
+		}
 		ValidatingMessageVisitor vmv = new ValidatingMessageVisitor(msgCr, sep, msgVersion);
 		MessageVisitors.visit(msg, vmv);
 		return vmv.getErrors();
@@ -90,6 +88,42 @@ public class MsgUtil {
 		return new TP(path, value, desc);
 	}
 	
+	/** get position of segment path */
+	public static Pos getPosition (Message msg, Terser terser, String path) throws Exception {
+        Segment segment = terser.getSegment(path.substring(0, path.indexOf("-")));
+        int[] i = Terser.getIndices(path);
+        int s = getSegmentOrdinal(msg, segment);
+        return new Pos(s, i[0], i[1], i[2], i[3]);
+	}
+	
+	/** get segment ordinal of segment */
+	public static int getSegmentOrdinal (final Message msg, final Segment segment) {
+		final int[] segOrd = new int[1];
+		
+		final MessageVisitorAdapter mv = new MessageVisitorAdapter() {
+			int s = 1;
+			@Override
+			public boolean start (Segment segment2, Location location) throws HL7Exception {
+				if (segment == segment2) {
+					segOrd[0] = s;
+					continue_ = false;
+					return false;
+				}
+				s++;
+				return continue_;
+			}
+		};
+		
+		try {
+			MessageVisitors.visit(msg, MessageVisitors.visitStructures(mv));
+			
+		} catch (HL7Exception e) {
+			System.out.println("could not get segment name: " + e);
+		}
+		
+		return segOrd[0];
+	}
+	
 	/** get segment and segment location from a segment ordinal */
 	public static SL getSegmentLocation (final Message msg, final int segmentOrd) {
 		final SL[] sl = new SL[1];
@@ -99,9 +133,10 @@ public class MsgUtil {
 			public boolean start (Segment segment, Location location) throws HL7Exception {
 				if (s == segmentOrd) {
 					sl[0] = new SL(segment, location);
+					continue_ = false;
 				}
 				s++;
-				return sl[0] == null;
+				return continue_;
 			}
 		};
 		try {
