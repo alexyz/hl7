@@ -33,6 +33,9 @@ public class ValidatingMessageVisitor extends MessageVisitorAdapter {
 	@Override
 	public boolean start (Segment segment, Location location) throws HL7Exception {
 		segOrd++;
+		Pos pos = new Pos(segOrd, 0, 0, 1, 1);
+		int[] index = MsgUtil.getIndex(msgCr, sep, pos);
+		errors.add(new VE(pos, segment.getName(), index, VE.Type.INFO));
 		return true;
 	}
 	
@@ -49,7 +52,8 @@ public class ValidatingMessageVisitor extends MessageVisitorAdapter {
 				int comp = Math.max(location.getComponent(), 1);
 				int subcomp = Math.max(location.getSubcomponent(), 1);
 				Pos pos = new Pos(segOrd, location.getField(), rep, comp, subcomp);
-				errors.add(new VE(pos, errorMsg, MsgUtil.getIndex(msgCr, sep, pos)));
+				int[] index = MsgUtil.getIndex(msgCr, sep, pos);
+				errors.add(new VE(pos, errorMsg, index, VE.Type.ERROR));
 				break;
 			}
 		}

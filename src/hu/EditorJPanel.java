@@ -18,7 +18,8 @@ import javax.swing.event.*;
 import javax.swing.text.*;
 
 public class EditorJPanel extends JPanel {
-	private static final Color ERROR = new Color(255, 192, 192);
+	private static final Color ERROR_COL = new Color(255, 192, 192);
+	private static final Color INFO_COL = new Color(192, 255, 192);
 	
 	/** message area, always represent segments separators as line feeds */
 	private final JTextArea msgArea = new JTextArea();
@@ -194,13 +195,16 @@ public class EditorJPanel extends JPanel {
 			final List<VE> errors = MsgUtil.getErrors(info.msg, info.msgCr, info.sep, msgVersion);
 			System.out.println("errors: " + errors.size());
 			
+			DefaultHighlighter.DefaultHighlightPainter errorPainter = new DefaultHighlighter.DefaultHighlightPainter(ERROR_COL);
+			DefaultHighlighter.DefaultHighlightPainter infoPainter = new DefaultHighlighter.DefaultHighlightPainter(INFO_COL);
+			
 			String currentError = null;
 			for (VE ve : errors) {
 				if (ve.pos.equals(pos)) {
 					currentError = ve.msg;
 				}
 				System.out.println("add highlight " + ve.indexes[0] + ", " + ve.indexes[1]);
-				highlights.add(h.addHighlight(ve.indexes[0], ve.indexes[1], new DefaultHighlighter.DefaultHighlightPainter(ERROR)));
+				highlights.add(h.addHighlight(ve.indexes[0], ve.indexes[1], ve.type == VE.Type.ERROR ? errorPainter : infoPainter));
 			}
 			
 			// populate the fields

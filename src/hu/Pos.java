@@ -3,7 +3,7 @@ package hu;
 /** a logical position in a message */
 class Pos implements Comparable<Pos> {
 	public final int segOrd;
-	/** field ordinal - can actually be 0 (no field selected) */
+	/** field ordinal - can actually be 0 (i.e. no field selected) */
 	public final int fieldOrd;
 	public final int fieldRep;
 	public final int compOrd;

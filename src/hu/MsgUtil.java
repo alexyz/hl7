@@ -244,57 +244,75 @@ public class MsgUtil {
 		
 		final int[] indexes = new int[2];
 		
-		// start field at 1 for MSH, 0 for others
-		int s = 1, f = 1, r = 0, c = 1, sc = 1, len = 0;
+		// segment, field and rep are prefixed (with CR, ~ and |) so start at 0
+		// component and subcomponent may not be prefixed (^ or &) so start at 1
+		int s = 1, f = 0, r = 0, c = 1, sc = 1, len = 0;
+		
+		boolean start = false;
 		
 		for (int i = 0; i < msgCr.length(); i++) {
 			char ch = msgCr.charAt(i);
-			if (ch == Sep.SEGMENT) {
-				s++;
-				f = 0;
-				r = 0;
-				c = 1;
-				sc = 1;
-				len = 0;
-				
-			} else if (ch == sep.field) {
-				f++;
-				r = 0;
-				c = 1;
-				sc = 1;
-				len = 0;
-				
-			} else if (ch == sep.repetition) {
-				r++;
-				c = 1;
-				sc = 1;
-				len = 0;
-				
-			} else if (ch == sep.component) {
-				c++;
-				sc = 1;
-				len = 0;
-				
-			} else if (ch == sep.subcomponent) {
-				sc++;
-				len = 0;
-				
-			} else {
-				len++;
-			}
 			
 			//System.out.println(String.format("getIndexes: ch %x s %d f %d fr %d c %d sc %d len %d", (int) ch, s, f, r, c, sc, len));
 			
 			if (s == pos.segOrd && f == pos.fieldOrd && r == pos.fieldRep && c == pos.compOrd && sc == pos.subCompOrd) {
 				//System.out.println("matched");
-				if (indexes[0] == 0) {
-					indexes[0] = i + 1;
+				if (!start) {
+					indexes[0] = i;
+					start = true;
+					
+				} else {
+					indexes[1] = indexes[0] + len;
 				}
-				indexes[1] = indexes[0] + len;
+			}
+			
+			if (i == 3 && msgCr.startsWith("MSH")) {
+				// special case
+				f++;
+				
+			} else {
+				if (ch == Sep.SEGMENT) {
+					s++;
+					f = 0;
+					r = 0;
+					c = 1;
+					sc = 1;
+					len = 0;
+					
+				} else if (ch == sep.field) {
+					f++;
+					r = 0;
+					c = 1;
+					sc = 1;
+					len = 0;
+					
+				} else if (ch == sep.repetition) {
+					r++;
+					c = 1;
+					sc = 1;
+					len = 0;
+					
+				} else if (ch == sep.component) {
+					c++;
+					sc = 1;
+					len = 0;
+					
+				} else if (ch == sep.subcomponent) {
+					sc++;
+					len = 0;
+					
+				} else {
+					len++;
+				}
 			}
 		}
 		
-		return indexes;
+		if (start) {
+			return indexes;
+			
+		} else {
+			return null;
+		}
 	}
 	
 }
