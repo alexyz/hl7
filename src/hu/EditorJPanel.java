@@ -34,6 +34,13 @@ public class EditorJPanel extends JPanel {
 	public EditorJPanel () {
 		super(new BorderLayout());
 		
+		((AbstractDocument)msgArea.getDocument()).setDocumentFilter(new DocumentFilter() {
+			@Override
+			public void insertString (FilterBypass fb, int offset, String string, AttributeSet attr) throws BadLocationException {
+				super.insertString(fb, offset, string.replace(Sep.SEGMENT, '\n'), attr);
+			}
+		});
+		
 		msgArea.setBorder(new TitledBorder("Message"));
 		msgArea.setLineWrap(true);
 		msgArea.addCaretListener(new CaretListener() {

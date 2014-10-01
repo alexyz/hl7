@@ -18,6 +18,17 @@ public class MsgUtil {
 		//
 	}
 	
+	// XXX
+	public static String toMsgCr (String msgLf) {
+		if (msgLf.length() > 4) {
+			String segmentSep = msgLf.substring(3, 4);
+			return msgLf.replaceAll("\n(^|[A-Z][A-Z0-9]{2}" + Pattern.quote(segmentSep) + ")", "\r$1");
+			
+		} else {
+			return msgLf.replace('\n', Sep.SEGMENT);
+		}
+	}
+	
 	/** get info about the message and the index */
 	public static Info getInfo (final String msgLf, final String version) throws Exception {
 		// parse the message

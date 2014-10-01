@@ -10,6 +10,7 @@ public class FileUtil {
 		try (BufferedReader br = new BufferedReader(new FileReader(file))) {
 			String l;
 			while ((l = br.readLine()) != null) {
+				System.out.println("l=" + l);
 				sb.append(l).append("\n");
 			}
 		} catch (Exception e) {
