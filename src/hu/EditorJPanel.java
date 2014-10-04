@@ -37,7 +37,13 @@ public class EditorJPanel extends JPanel {
 		((AbstractDocument)msgArea.getDocument()).setDocumentFilter(new DocumentFilter() {
 			@Override
 			public void insertString (FilterBypass fb, int offset, String string, AttributeSet attr) throws BadLocationException {
+				System.out.println("document filter insert string");
 				super.insertString(fb, offset, string.replace(Sep.SEGMENT, '\n'), attr);
+			}
+			@Override
+			public void replace (FilterBypass fb, int offset, int length, String text, AttributeSet attrs) throws BadLocationException {
+				System.out.println("document filter replace");
+				super.replace(fb, offset, length, text.replace(Sep.SEGMENT, '\n'), attrs);
 			}
 		});
 		
@@ -70,7 +76,6 @@ public class EditorJPanel extends JPanel {
 			
 		});
 		
-		pathField.setBorder(new TitledBorder("HAPI Terser Path"));
 		pathField.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed (ActionEvent e) {
@@ -86,7 +91,6 @@ public class EditorJPanel extends JPanel {
 			}
 		});
 		
-		valueField.setBorder(new TitledBorder("Value"));
 		valueField.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed (ActionEvent e) {
@@ -111,16 +115,18 @@ public class EditorJPanel extends JPanel {
 		descriptionArea.setEditable(false);
 		
 		JPanel pathPanel = new JPanel(new BorderLayout());
+		pathPanel.setBorder(new TitledBorder("HAPI Terser Path"));
 		pathPanel.add(pathField, BorderLayout.CENTER);
 		pathPanel.add(pathButton, BorderLayout.EAST);
 		
 		JPanel valuePanel = new JPanel(new BorderLayout());
+		valuePanel.setBorder(new TitledBorder("Value"));
 		valuePanel.add(valueField, BorderLayout.CENTER);
 		valuePanel.add(valueButton, BorderLayout.EAST);
 		
-		JPanel fieldsPanelNorth = new JPanel(new GridLayout(2, 1));
-		fieldsPanelNorth.add(pathPanel);
-		fieldsPanelNorth.add(valuePanel);
+		JPanel fieldsPanelNorth = new JPanel(new BorderLayout());
+		fieldsPanelNorth.add(pathPanel, BorderLayout.NORTH);
+		fieldsPanelNorth.add(valuePanel, BorderLayout.CENTER);
 		
 		JPanel fieldsPanel = new JPanel(new BorderLayout());
 		fieldsPanel.add(fieldsPanelNorth, BorderLayout.NORTH);

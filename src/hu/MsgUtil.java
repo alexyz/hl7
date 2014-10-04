@@ -48,7 +48,12 @@ public class MsgUtil {
 		final Terser terser = new Terser(msg);
 		
 		// do the validations
-		final Sep sep = new Sep(terser);
+		final Sep sep = new Sep(msg);
+		
+		// TODO validate missing/unexpected segments?
+		for (String s : msg.getNames()) {
+			System.out.println("name=" + s + " required=" + msg.isRequired(s) + " group=" + msg.isGroup(s) + " repeating=" + msg.isRepeating(s));
+		}
 		
 		return new Info(msg, terser, sep, msgCr);
 	}
@@ -85,7 +90,7 @@ public class MsgUtil {
 				}
 			}
 			path = pathSb.toString();
-			desc = getDescription(sl.segment, pos);
+			desc = msg.getName() + ", " + getDescription(sl.segment, pos);
 			
 			if (pos.fieldOrd > 0) {
 				try {
@@ -255,8 +260,8 @@ public class MsgUtil {
 		
 		final int[] indexes = new int[2];
 		
-		// segment, field and rep are prefixed (with CR, ~ and |) so start at 0
-		// component and subcomponent may not be prefixed (^ or &) so start at 1
+		// field and repetition are prefixed (with ~ and |) so start at 0
+		// segment, component and subcomponent may not be prefixed (with CR, ^ or &) so start at 1
 		int s = 1, f = 0, r = 0, c = 1, sc = 1, len = 0;
 		
 		boolean start = false;

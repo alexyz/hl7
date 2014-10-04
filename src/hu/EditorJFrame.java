@@ -3,6 +3,7 @@ package hu;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.Point;
 import java.awt.event.*;
 import java.io.File;
 import java.util.ArrayList;
@@ -46,9 +47,21 @@ public class EditorJFrame extends JFrame {
 		tabs.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseClicked (MouseEvent e) {
-				if (e.getClickCount() >= 2) {
+				 if (!e.isPopupTrigger() && e.getClickCount() >= 2) {
 					System.out.println("mouse click " + e.getClickCount());
 					addEditor();
+				}
+			}
+			@Override
+			public void mousePressed (MouseEvent e) {
+				if (e.isPopupTrigger()) {
+					popup(e.getPoint());
+				}
+			}
+			@Override
+			public void mouseReleased (MouseEvent e) {
+				if (e.isPopupTrigger()) {
+					popup(e.getPoint());
 				}
 			}
 		});
@@ -168,6 +181,28 @@ public class EditorJFrame extends JFrame {
 		menuBar.add(fontMenu);
 		menuBar.add(versionMenu);
 		return menuBar;
+	}
+	
+	private void popup (Point p) {
+		JMenuItem reopenItem = new JMenuItem("Re-open");
+		reopenItem.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed (ActionEvent e) {
+				reopenFile();
+			}
+		});
+		JMenuItem closeItem = new JMenuItem("Close");
+		closeItem.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed (ActionEvent ae) {
+				closeCurrentEditor();
+			}
+		});
+		
+		JPopupMenu menu = new JPopupMenu("Editor");
+		menu.add(reopenItem);
+		menu.add(closeItem);
+		menu.show(tabs, p.x, p.y);
 	}
 	
 	public void addEditor () {
