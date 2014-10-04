@@ -58,7 +58,7 @@ public class MsgUtil {
 		return new Info(msg, terser, sep, msgCr);
 	}
 	
-	public static List<VE> getErrors (Message msg, String msgCr, Sep sep, String msgVersion) throws Exception {
+	public static List<ValidationMessage> getErrors (Message msg, String msgCr, Sep sep, String msgVersion) throws Exception {
 		if (msgVersion.equals(EditorJFrame.AUTO_VERSION)) {
 			msgVersion = msg.getVersion();
 		}
@@ -106,10 +106,10 @@ public class MsgUtil {
 	
 	/** get position of segment path */
 	public static Pos getPosition (Message msg, Terser terser, String path) throws Exception {
-        Segment segment = terser.getSegment(path.substring(0, path.indexOf("-")));
-        int[] i = Terser.getIndices(path);
-        int s = getSegmentOrdinal(msg, segment);
-        return new Pos(s, i[0], i[1], i[2], i[3]);
+		Segment segment = terser.getSegment(path.substring(0, path.indexOf("-")));
+		int[] i = Terser.getIndices(path);
+		int s = getSegmentOrdinal(msg, segment);
+		return new Pos(s, i[0], i[1], i[2], i[3]);
 	}
 	
 	/** get segment ordinal of segment */
@@ -119,7 +119,7 @@ public class MsgUtil {
 		final MessageVisitorAdapter mv = new MessageVisitorAdapter() {
 			int s = 1;
 			@Override
-			public boolean start (Segment segment2, Location location) throws HL7Exception {
+			public boolean start2 (Segment segment2, Location location) throws HL7Exception {
 				if (segment == segment2) {
 					segOrd[0] = s;
 					continue_ = false;
@@ -146,7 +146,7 @@ public class MsgUtil {
 		MessageVisitorAdapter mv = new MessageVisitorAdapter() {
 			int s = 1;
 			@Override
-			public boolean start (Segment segment, Location location) throws HL7Exception {
+			public boolean start2 (Segment segment, Location location) throws HL7Exception {
 				if (s == segmentOrd) {
 					sl[0] = new SL(segment, location);
 					continue_ = false;
@@ -264,7 +264,7 @@ public class MsgUtil {
 		// segment, component and subcomponent may not be prefixed (with CR, ^ or &) so start at 1
 		int s = 1, f = 0, r = 0, c = 1, sc = 1, len = 0;
 		
-		boolean start = false;
+		boolean found = false;
 		
 		for (int i = 0; i < msgCr.length(); i++) {
 			char ch = msgCr.charAt(i);
@@ -273,13 +273,17 @@ public class MsgUtil {
 			
 			if (s == pos.segOrd && f == pos.fieldOrd && r == pos.fieldRep && c == pos.compOrd && sc == pos.subCompOrd) {
 				//System.out.println("matched");
-				if (!start) {
+				if (!found) {
 					indexes[0] = i;
-					start = true;
+					indexes[1] = i;
+					found = true;
 					
 				} else {
 					indexes[1] = indexes[0] + len;
 				}
+				
+			} else if (found || s > pos.segOrd) {
+				break;
 			}
 			
 			if (i == 3 && msgCr.startsWith("MSH")) {
@@ -323,10 +327,11 @@ public class MsgUtil {
 			}
 		}
 		
-		if (start) {
+		if (found) {
 			return indexes;
 			
 		} else {
+			System.out.println("could not find pos");
 			return null;
 		}
 	}

@@ -17,7 +17,7 @@ public class ValidatingMessageVisitor extends MessageVisitorAdapter {
 	private final String version;
 	private final String msgCr;
 	private final Sep sep;
-	private final List<VE> errors = new ArrayList<>();
+	private final List<ValidationMessage> errors = new ArrayList<>();
 	
 	private int segOrd;
 	
@@ -31,11 +31,11 @@ public class ValidatingMessageVisitor extends MessageVisitorAdapter {
 	}
 	
 	@Override
-	public boolean start (Segment segment, Location location) throws HL7Exception {
+	public boolean start2 (Segment segment, Location location) throws HL7Exception {
 		segOrd++;
 		Pos pos = new Pos(segOrd, 0, 0, 1, 1);
 		int[] index = MsgUtil.getIndex(msgCr, sep, pos);
-		errors.add(new VE(pos, segment.getName(), index, VE.Type.INFO));
+		errors.add(new ValidationMessage(pos, segment.getName(), index, ValidationMessage.Type.INFO));
 		return true;
 	}
 	
@@ -53,7 +53,7 @@ public class ValidatingMessageVisitor extends MessageVisitorAdapter {
 				int subcomp = Math.max(location.getSubcomponent(), 1);
 				Pos pos = new Pos(segOrd, location.getField(), rep, comp, subcomp);
 				int[] index = MsgUtil.getIndex(msgCr, sep, pos);
-				errors.add(new VE(pos, errorMsg, index, VE.Type.ERROR));
+				errors.add(new ValidationMessage(pos, errorMsg, index, ValidationMessage.Type.ERROR));
 				break;
 			}
 		}
@@ -61,7 +61,7 @@ public class ValidatingMessageVisitor extends MessageVisitorAdapter {
 	}
 	
 	/** get the list of errors, maybe empty, never null */
-	public List<VE> getErrors () {
+	public List<ValidationMessage> getErrors () {
 		return errors;
 	}
 }

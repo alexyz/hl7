@@ -13,7 +13,7 @@ public class MessageVisitorAdapter implements MessageVisitor {
 	 */
 	protected boolean continue_ = true;
 	
-	private final Map<String,Integer> repIndexes = new HashMap<>();
+	private final Map<String,Integer> repIndexes = new TreeMap<>();
 	
 	@Override
 	public boolean start (Message message) throws HL7Exception {
@@ -36,7 +36,12 @@ public class MessageVisitorAdapter implements MessageVisitor {
 	}
 	
 	@Override
-	public boolean start (Segment segment, Location location) throws HL7Exception {
+	public final boolean start (Segment segment, Location location) throws HL7Exception {
+		repIndexes.clear();
+		return start2(segment, location);
+	}
+	
+	public boolean start2 (Segment segment, Location location) throws HL7Exception {
 		return continue_;
 	}
 	

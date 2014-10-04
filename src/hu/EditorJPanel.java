@@ -184,7 +184,7 @@ public class EditorJPanel extends JPanel {
 	
 	private void update () {
 		System.out.println("update");
-		int i = msgArea.getCaretPosition();
+		int caretIndex = msgArea.getCaretPosition();
 		
 		String msgLf = msgArea.getText();
 		if (msgLf.length() == 0) {
@@ -204,20 +204,25 @@ public class EditorJPanel extends JPanel {
 			// do error highlighting
 			
 			final Info info = MsgUtil.getInfo(msgLf, msgVersion);
-			final Pos pos = MsgUtil.getPosition(info.msgCr, info.sep, i);
-			final List<VE> errors = MsgUtil.getErrors(info.msg, info.msgCr, info.sep, msgVersion);
+			final Pos pos = MsgUtil.getPosition(info.msgCr, info.sep, caretIndex);
+			final List<ValidationMessage> errors = MsgUtil.getErrors(info.msg, info.msgCr, info.sep, msgVersion);
 			System.out.println("errors: " + errors.size());
 			
 			DefaultHighlighter.DefaultHighlightPainter errorPainter = new DefaultHighlighter.DefaultHighlightPainter(ERROR_COL);
 			DefaultHighlighter.DefaultHighlightPainter infoPainter = new DefaultHighlighter.DefaultHighlightPainter(INFO_COL);
 			
 			String currentError = null;
-			for (VE ve : errors) {
+			for (ValidationMessage ve : errors) {
+				System.out.println("highlight " + ve);
 				if (ve.pos.equals(pos)) {
 					currentError = ve.msg;
 				}
-				System.out.println("add highlight " + ve.indexes[0] + ", " + ve.indexes[1]);
-				highlights.add(h.addHighlight(ve.indexes[0], ve.indexes[1], ve.type == VE.Type.ERROR ? errorPainter : infoPainter));
+				int[] i = ve.indexes;
+				if (i != null) {
+					highlights.add(h.addHighlight(i[0], i[1], ve.type == ValidationMessage.Type.ERROR ? errorPainter : infoPainter));
+				} else {
+					System.out.println("no indexes!");
+				}
 			}
 			
 			// populate the fields

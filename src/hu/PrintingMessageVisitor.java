@@ -19,7 +19,7 @@ public class PrintingMessageVisitor extends MessageVisitorAdapter {
 	}
 	
 	@Override
-	public boolean start (Segment segment, Location location) throws HL7Exception {
+	public boolean start2 (Segment segment, Location location) throws HL7Exception {
 		System.out.println("    " + location + " segment " + segment);
 		return true;
 	}
