@@ -71,7 +71,7 @@ public class MessageVisitorAdapter implements MessageVisitor {
 	}
 	
 	@Override
-	public boolean visit (Primitive type, Location location) throws HL7Exception {
+	public final boolean visit (Primitive type, Location location) throws HL7Exception {
 		// fix the repetition count being 0
 		String l = location.toString();
 		Integer repIndex = repIndexes.get(l);

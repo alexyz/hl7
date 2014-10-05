@@ -58,11 +58,11 @@ public class MsgUtil {
 		return new Info(msg, terser, sep, msgCr);
 	}
 	
-	public static List<ValidationMessage> getErrors (Message msg, String msgCr, Sep sep, String msgVersion) throws Exception {
+	public static List<ValidationMessage> getErrors (Message msg, String msgCr, Sep sep, String msgVersion, String selectedValue) throws Exception {
 		if (msgVersion.equals(EditorJFrame.AUTO_VERSION)) {
 			msgVersion = msg.getVersion();
 		}
-		ValidatingMessageVisitor vmv = new ValidatingMessageVisitor(msgCr, sep, msgVersion);
+		ValidatingMessageVisitor vmv = new ValidatingMessageVisitor(msgCr, sep, msgVersion, selectedValue);
 		MessageVisitors.visit(msg, vmv);
 		return vmv.getErrors();
 	}
@@ -251,7 +251,7 @@ public class MsgUtil {
 	}
 	
 	/** get the character indexes (start and end) of the given logical position */
-	public static int[] getIndex (final String msgCr, final Sep sep, final Pos pos) {
+	public static int[] getIndexes (final String msgCr, final Sep sep, final Pos pos) {
 		System.out.println("get indexes: " + msgCr.length() + ", " + pos);
 		
 		if (msgCr.contains("\n")) {
@@ -286,8 +286,8 @@ public class MsgUtil {
 				break;
 			}
 			
-			if (i == 3 && msgCr.startsWith("MSH")) {
-				// special case
+			if (i == 4 && msgCr.startsWith("MSH")) {
+				// special case, MSH-2 always begins at index 4
 				f++;
 				
 			} else {

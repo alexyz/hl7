@@ -37,7 +37,7 @@ public class PrintingMessageVisitor extends MessageVisitorAdapter {
 	}
 	
 	@Override
-	public boolean visit (Primitive type, Location location) throws HL7Exception {
+	public boolean visit2 (Primitive type, Location location) throws HL7Exception {
 		System.out.println("          " + location + " primitive " + type);
 		return true;
 	}

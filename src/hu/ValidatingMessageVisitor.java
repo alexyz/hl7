@@ -18,45 +18,61 @@ public class ValidatingMessageVisitor extends MessageVisitorAdapter {
 	private final String msgCr;
 	private final Sep sep;
 	private final List<ValidationMessage> errors = new ArrayList<>();
+	private final String selectedValue;
 	
 	private int segOrd;
 	
 	/**
 	 * msgCr - reference for getting index of errors
 	 */
-	public ValidatingMessageVisitor (String msgCr, Sep sep, String version) {
+	public ValidatingMessageVisitor (String msgCr, Sep sep, String version, String selectedValue) {
 		this.msgCr = msgCr;
 		this.sep = sep;
 		this.version = version;
+		this.selectedValue = selectedValue;
 	}
 	
 	@Override
 	public boolean start2 (Segment segment, Location location) throws HL7Exception {
 		segOrd++;
 		Pos pos = new Pos(segOrd, 0, 0, 1, 1);
-		int[] index = MsgUtil.getIndex(msgCr, sep, pos);
-		errors.add(new ValidationMessage(pos, segment.getName(), index, ValidationMessage.Type.INFO));
+		int[] index = MsgUtil.getIndexes(msgCr, sep, pos);
+		errors.add(new ValidationMessage(pos, segment.getName(), index, ValidationMessage.Type.SEGMENT));
 		return true;
 	}
 	
 	@Override
-	public boolean visit2 (Primitive type, Location location) throws HL7Exception {
-		Collection<PrimitiveTypeRule> rules = vc.getPrimitiveRules(version, type.getName(), type);
-		for (PrimitiveTypeRule rule : rules) {
-			String v = rule.correct(type.getValue());
-			ValidationException[] ves = rule.apply(v);
-			if (ves.length > 0) {
-				String errorMsg = rule.getDescription().replace("%s", type.getValue());
-				System.out.println("vmv visit2: " + location + " -> " + errorMsg);
-				int rep = Math.max(location.getFieldRepetition(), 0);
-				int comp = Math.max(location.getComponent(), 1);
-				int subcomp = Math.max(location.getSubcomponent(), 1);
-				Pos pos = new Pos(segOrd, location.getField(), rep, comp, subcomp);
-				int[] index = MsgUtil.getIndex(msgCr, sep, pos);
-				errors.add(new ValidationMessage(pos, errorMsg, index, ValidationMessage.Type.ERROR));
-				break;
+	public boolean visit2 (final Primitive primitive, final Location location) throws HL7Exception {
+		ValidationMessage.Type vmType = null;
+		String vmMsg = "";
+		
+		if (selectedValue != null && selectedValue.equalsIgnoreCase(primitive.getValue())) {
+			vmType = ValidationMessage.Type.VALUE;
+			
+		} else {
+			final Collection<PrimitiveTypeRule> rules = vc.getPrimitiveRules(version, primitive.getName(), primitive);
+			for (PrimitiveTypeRule rule : rules) {
+				final String v = rule.correct(primitive.getValue());
+				final ValidationException[] ves = rule.apply(v);
+				if (ves.length > 0) {
+					vmType = ValidationMessage.Type.ERROR;
+					vmMsg = rule.getDescription().replace("%s", primitive.getValue());
+					break;
+				}
 			}
 		}
+		
+		if (vmType != null) {
+			System.out.println("vmv visit2: " + location + " -> " + vmMsg);
+			final int rep = Math.max(location.getFieldRepetition(), 0);
+			final int comp = Math.max(location.getComponent(), 1);
+			final int subcomp = Math.max(location.getSubcomponent(), 1);
+			final int field = location.getField();
+			final Pos pos = new Pos(segOrd, field, rep, comp, subcomp);
+			final int[] index = MsgUtil.getIndexes(msgCr, sep, pos);
+			errors.add(new ValidationMessage(pos, vmMsg, index, vmType));
+		}
+		
 		return true;
 	}
 	

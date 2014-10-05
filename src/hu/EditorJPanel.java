@@ -18,8 +18,23 @@ import javax.swing.event.*;
 import javax.swing.text.*;
 
 public class EditorJPanel extends JPanel {
+	
 	private static final Color ERROR_COL = new Color(255, 192, 192);
-	private static final Color INFO_COL = new Color(192, 255, 192);
+	private static final Color SEGMENT_COL = new Color(192, 255, 192);
+	private static final Color VALUE_COL = new Color(255, 255, 192);
+
+	private static Color getColor(ValidationMessage.Type type) {
+		switch (type) {
+			case ERROR:
+				return ERROR_COL;
+			case SEGMENT:
+				return SEGMENT_COL;
+			case VALUE:
+				return VALUE_COL;
+			default:
+				throw new RuntimeException("unknown type " + type);
+		}
+	}
 	
 	/** message area, always represent segments separators as line feeds */
 	private final JTextArea msgArea = new JTextArea();
@@ -49,6 +64,7 @@ public class EditorJPanel extends JPanel {
 		
 		msgArea.setBorder(new TitledBorder("Message"));
 		msgArea.setLineWrap(true);
+		
 		msgArea.addCaretListener(new CaretListener() {
 			@Override
 			public void caretUpdate (CaretEvent ce) {
@@ -59,6 +75,7 @@ public class EditorJPanel extends JPanel {
 				}
 			}
 		});
+		
 		msgArea.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mousePressed (MouseEvent e) {
@@ -184,16 +201,17 @@ public class EditorJPanel extends JPanel {
 	
 	private void update () {
 		System.out.println("update");
-		int caretIndex = msgArea.getCaretPosition();
+		final int caretIndex = msgArea.getCaretPosition();
+		final int selStart = msgArea.getSelectionStart();
+		final int selEnd = msgArea.getSelectionEnd();
+		final String msgLf = msgArea.getText();
 		
-		String msgLf = msgArea.getText();
 		if (msgLf.length() == 0) {
 			System.out.println("update: no message");
 			return;
 		}
 		
 		try {
-			
 			// clear error highlighting
 			Highlighter h = msgArea.getHighlighter();
 			for (Object o : highlights) {
@@ -203,13 +221,15 @@ public class EditorJPanel extends JPanel {
 			
 			// do error highlighting
 			
+			String selectedValue = null;
+			if (selStart >0 && selEnd > selStart) {
+				selectedValue = msgLf.substring(selStart, selEnd);
+			}
+			
 			final Info info = MsgUtil.getInfo(msgLf, msgVersion);
 			final Pos pos = MsgUtil.getPosition(info.msgCr, info.sep, caretIndex);
-			final List<ValidationMessage> errors = MsgUtil.getErrors(info.msg, info.msgCr, info.sep, msgVersion);
+			final List<ValidationMessage> errors = MsgUtil.getErrors(info.msg, info.msgCr, info.sep, msgVersion, selectedValue);
 			System.out.println("errors: " + errors.size());
-			
-			DefaultHighlighter.DefaultHighlightPainter errorPainter = new DefaultHighlighter.DefaultHighlightPainter(ERROR_COL);
-			DefaultHighlighter.DefaultHighlightPainter infoPainter = new DefaultHighlighter.DefaultHighlightPainter(INFO_COL);
 			
 			String currentError = null;
 			for (ValidationMessage ve : errors) {
@@ -217,9 +237,11 @@ public class EditorJPanel extends JPanel {
 				if (ve.pos.equals(pos)) {
 					currentError = ve.msg;
 				}
-				int[] i = ve.indexes;
+				
+				final int[] i = ve.indexes;
 				if (i != null) {
-					highlights.add(h.addHighlight(i[0], i[1], ve.type == ValidationMessage.Type.ERROR ? errorPainter : infoPainter));
+					highlights.add(h.addHighlight(i[0], i[1], new DefaultHighlighter.DefaultHighlightPainter(getColor(ve.type))));
+					
 				} else {
 					System.out.println("no indexes!");
 				}
@@ -285,8 +307,8 @@ public class EditorJPanel extends JPanel {
 			
 			msgArea.setText(msgCr.replace(Sep.SEGMENT, '\n'));
 			
-			int[] i = MsgUtil.getIndex(msgCr, info2.sep, pos);
-			if (i[1] > 0) {
+			int[] i = MsgUtil.getIndexes(msgCr, info2.sep, pos);
+			if (i != null) {
 				msgArea.setCaretPosition(i[1]);
 			}
 			
@@ -360,4 +382,5 @@ public class EditorJPanel extends JPanel {
 			throw new RuntimeException("could not paste", e);
 		}
 	}
+	
 }
