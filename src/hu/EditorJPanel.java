@@ -266,9 +266,11 @@ public class EditorJPanel extends JPanel {
 				}
 			}
 			
+		} catch (RuntimeException e) {
+			throw e;
 			
 		} catch (Exception e) {
-			e.printStackTrace();
+			System.out.println("could not update: " + e);
 			pathField.setText("");
 			valueField.setText("");
 			descriptionArea.setText(e.toString());

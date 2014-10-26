@@ -35,7 +35,7 @@ public class EditorJFrame extends JFrame {
 	private final JTabbedPane tabs = new JTabbedPane();
 	
 	private File dir = new File(System.getProperty("user.dir"));
-	private Font editorFont = new Font("monospaced", 0, 12);
+	private Font editorFont = new Font("Monospaced", 0, 14);
 	private String messageVersion = AUTO_VERSION;
 	
 	public EditorJFrame () {
@@ -77,23 +77,20 @@ public class EditorJFrame extends JFrame {
 	private JMenuBar createMenu () {
 		JMenu fontMenu = new JMenu("Font");
 		{
-			ButtonGroup sizeGroup = new ButtonGroup();
-			for (int n = 10; n <= 18; n++) {
-				final int nn = n;
-				JRadioButtonMenuItem item = new JRadioButtonMenuItem("Size " + n);
-				sizeGroup.add(item);
-				item.addActionListener(new ActionListener() {
-					@Override
-					public void actionPerformed (ActionEvent e) {
-						System.out.println("size " + nn);
-						setFontSizes(nn);
+			JMenuItem item = new JMenuItem("Font...");
+			item.addActionListener(new ActionListener() {
+				@Override
+				public void actionPerformed (ActionEvent e) {
+					System.out.println("font");
+					FontJDialog dialog = new FontJDialog(EditorJFrame.this, editorFont);
+					dialog.setVisible(true);
+					Font f = dialog.getSelectedFont();
+					if (f != null) {
+						setEditorFonts(f);
 					}
-				});
-				if (n == editorFont.getSize()) {
-					item.setSelected(true);
 				}
-				fontMenu.add(item);
-			}
+			});
+			fontMenu.add(item);
 		}
 		
 		JMenu fileMenu = new JMenu("File");
@@ -107,7 +104,7 @@ public class EditorJFrame extends JFrame {
 				}
 			});
 			
-			JMenuItem openItem = new JMenuItem("Open");
+			JMenuItem openItem = new JMenuItem("Open...");
 			openItem.addActionListener(new ActionListener() {
 				@Override
 				public void actionPerformed (ActionEvent e) {
@@ -123,7 +120,7 @@ public class EditorJFrame extends JFrame {
 				}
 			});
 			
-			JMenuItem saveItem = new JMenuItem("Save As");
+			JMenuItem saveItem = new JMenuItem("Save As...");
 			saveItem.addActionListener(new ActionListener() {
 				@Override
 				public void actionPerformed (ActionEvent e) {
@@ -172,7 +169,7 @@ public class EditorJFrame extends JFrame {
 		JMenu messageMenu = new JMenu("Message");
 		{
 			{
-				JMenuItem item = new JMenuItem("Print Structure");
+				JMenuItem item = new JMenuItem("Print Structure...");
 				item.addActionListener(new ActionListener() {
 					@Override
 					public void actionPerformed (ActionEvent e) {
@@ -182,7 +179,7 @@ public class EditorJFrame extends JFrame {
 				messageMenu.add(item);
 			}
 			{
-				JMenuItem item = new JMenuItem("Print Locations");
+				JMenuItem item = new JMenuItem("Print Locations...");
 				item.addActionListener(new ActionListener() {
 					@Override
 					public void actionPerformed (ActionEvent e) {
@@ -316,18 +313,19 @@ public class EditorJFrame extends JFrame {
 		System.out.println("close current editor");
 		EditorJPanel ep = (EditorJPanel) tabs.getSelectedComponent();
 		if (ep != null) {
-			if (JOptionPane.showConfirmDialog(this, "Close editor?", "Close", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
+			String message = ep.getMessage();
+			if (message == null || message.length() == 0 || JOptionPane.showConfirmDialog(this, "Close editor?", "Close", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
 				tabs.remove(ep);
 			}
 		}
 	}
 	
-	private void setFontSizes (int size) {
-		System.out.println("set editor font size " + size);
-		editorFont = new Font("monospaced", 0, size);
+	private void setEditorFonts (Font font) {
+		System.out.println("set editor fonts " + font);
+		this.editorFont = font;
 		for (Component comp : tabs.getComponents()) {
 			if (comp instanceof EditorJPanel) {
-				((EditorJPanel) comp).setEditorFont(editorFont);
+				((EditorJPanel) comp).setEditorFont(font);
 			}
 		}
 	}
