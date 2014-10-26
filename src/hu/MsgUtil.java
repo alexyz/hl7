@@ -90,7 +90,7 @@ public class MsgUtil {
 				}
 			}
 			path = pathSb.toString();
-			desc = msg.getName() + ", " + getDescription(sl.segment, pos);
+			desc = "Message " + msg.getName() + ", " + getDescription(sl.segment, pos);
 			
 			if (pos.fieldOrd > 0) {
 				try {
@@ -167,49 +167,69 @@ public class MsgUtil {
 	
 	/** get description of hl7 field, component and subcomponent */
 	public static String getDescription (final Segment segment, final Pos pos) {
-		String desc = segment.getName();
-		Object[] fd = getDescription2(segment.getClass(), pos.fieldOrd);
-		if (fd != null) {
-			desc += ", " + fd[0];
-			if (fd[1] != null) {
-				Object[] cd = getDescription2((Class<?>) fd[1], pos.compOrd);
-				if (cd != null) {
-					desc += ", " + cd[0];
-					if (cd[1] != null) {
-						Object[] scd = getDescription2((Class<?>) cd[1], pos.subCompOrd);
-						if (scd != null) {
-							desc += ", " + scd[0];
+		System.out.println("get description " + pos);
+		StringBuilder sb = new StringBuilder();
+		sb.append("segment " + segment.getName());
+		Class<?>[] type = new Class[] { segment.getClass() };
+		String field = getDescription2(type, pos.fieldOrd);
+		if (field != null) {
+			sb.append(", field " + field);
+			if (type[0] != null) {
+				String comp = getDescription2(type, pos.compOrd);
+				if (comp != null) {
+					sb.append(", component " + comp);
+					if (type[0] != null) {
+						String subcomp = getDescription2(type, pos.subCompOrd);
+						if (subcomp != null) {
+							sb.append(", subcomponent " + subcomp);
+						} else {
+							sb.append(", unknown subcomponent");
 						}
+					} else if (pos.subCompOrd > 1) {
+						sb.append(", unknown subcomponent");
 					}
+				} else {
+					sb.append(", unknown component");
 				}
+			} else if (pos.compOrd > 1) {
+				sb.append(", unknown component");
+				
+			} else if (pos.subCompOrd > 1) {
+				sb.append(", unknown subcomponent");
 			}
+		} else {
+			sb.append(", unknown field");
 		}
-		return desc;
+		return sb.toString();
 	}
 	
-	/** get description of element from class */
-	private static Object[] getDescription2 (Class<?> cl, int ord) {
-		Pattern methodPat = Pattern.compile("get\\w{" + cl.getSimpleName().length() + "}(\\d+)_(\\w+)");
-		for (Method m : cl.getMethods()) {
+	/** get description of method from class */
+	private static String getDescription2 (Class<?>[] type, int ord) {
+		Pattern methodPat = Pattern.compile("get\\w{" + type[0].getSimpleName().length() + "}(\\d+)_(\\w+)");
+		for (Method m : type[0].getMethods()) {
 			Class<?> rt = m.getReturnType();
 			if (rt != null && !rt.isPrimitive()) {
 				// getObr5_PriorityOBR()
 				Matcher mat = methodPat.matcher(m.getName());
 				if (mat.matches()) {
 					int f = Integer.parseInt(mat.group(1));
-					String fn = mat.group(2);
 					if (f == ord) {
 						if (Object[].class.isAssignableFrom(rt)) {
+							// remove array indirection
 							rt = rt.getComponentType();
 						}
-						fn += " [" + rt.getSimpleName() + "]";
-						if (!AbstractType.class.isAssignableFrom(rt)) {
-							rt = null;
-						}
+						String name = mat.group(2) + " [" + rt.getSimpleName() + "]";
+//						if (!AbstractType.class.isAssignableFrom(type)) {
+//							System.out.println("name " + name + " is not abstract type");
+//							type = null;
+//						}
 						if (rt != null && AbstractPrimitive.class.isAssignableFrom(rt)) {
+							System.out.println("name " + name + " is abstract primitive");
+							// can't go deeper
 							rt = null;
 						}
-						return new Object[] { fn, rt };
+						type[0] = rt;
+						return name;
 					}
 				}
 			}
