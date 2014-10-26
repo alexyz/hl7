@@ -95,8 +95,10 @@ public class MsgUtil {
 			if (pos.fieldOrd > 0) {
 				try {
 					value = t.get(path);
+					
 				} catch (Exception e) {
-					throw new Exception("can't get path " + path, e);
+					System.out.println("could not get value of terser path: " + e);
+					desc = e.toString();
 				}
 			}
 		}

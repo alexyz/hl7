@@ -4,7 +4,6 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Font;
-import java.awt.GridLayout;
 import java.awt.Point;
 import java.awt.Toolkit;
 import java.awt.datatransfer.*;
@@ -16,6 +15,8 @@ import javax.swing.*;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.*;
 import javax.swing.text.*;
+
+import ca.uhn.hl7v2.model.MessageVisitors;
 
 public class EditorJPanel extends JPanel {
 	
@@ -268,6 +269,8 @@ public class EditorJPanel extends JPanel {
 			
 		} catch (Exception e) {
 			e.printStackTrace();
+			pathField.setText("");
+			valueField.setText("");
 			descriptionArea.setText(e.toString());
 		}
 	}
@@ -282,7 +285,7 @@ public class EditorJPanel extends JPanel {
 			// TODO update description, caret (if bounded!)
 			
 		} catch (Exception e) {
-			e.printStackTrace();
+			System.out.println("could not update path: " + e);
 			descriptionArea.setText(e.toString());
 		}
 	}
@@ -382,5 +385,26 @@ public class EditorJPanel extends JPanel {
 			throw new RuntimeException("could not paste", e);
 		}
 	}
+
+	public String printStructure () {
+		try {
+			String msgLf = msgArea.getText();
+			Info info = MsgUtil.getInfo(msgLf, msgVersion);
+			return info.msg.printStructure();
+		} catch (Exception e) {
+			return e.toString();
+		}
+	}
 	
+	public String printLocations () {
+		try {
+			String msgLf = msgArea.getText();
+			Info info = MsgUtil.getInfo(msgLf, msgVersion);
+			StringMessageVisitor mv = new StringMessageVisitor();
+			MessageVisitors.visit(info.msg, mv);
+			return mv.toString();
+		} catch (Exception e) {
+			return e.toString();
+		}
+	}
 }

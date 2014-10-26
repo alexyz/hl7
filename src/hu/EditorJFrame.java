@@ -75,112 +75,150 @@ public class EditorJFrame extends JFrame {
 	}
 	
 	private JMenuBar createMenu () {
-		JMenuItem newItem = new JMenuItem("New");
-		newItem.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed (ActionEvent e) {
-				System.out.println("new");
-				addEditor();
-			}
-		});
-		
-		JMenuItem openItem = new JMenuItem("Open");
-		openItem.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed (ActionEvent e) {
-				openFile();
-			}
-		});
-		
-		JMenuItem reopenItem = new JMenuItem("Re-open");
-		reopenItem.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed (ActionEvent e) {
-				reopenFile();
-			}
-		});
-		
-		JMenuItem saveItem = new JMenuItem("Save As");
-		saveItem.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed (ActionEvent e) {
-				saveCurrentEditor();
-			}
-		});
-		
-		JMenuItem closeItem = new JMenuItem("Close");
-		closeItem.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed (ActionEvent e) {
-				closeCurrentEditor();
-			}
-		});
-		
-		JRadioButtonMenuItem[] sizeItems = new JRadioButtonMenuItem[9];
-		ButtonGroup sizeGroup = new ButtonGroup();
-		for (int n = 0; n < sizeItems.length; n++) {
-			final int size = n + 10;
-			JRadioButtonMenuItem item = new JRadioButtonMenuItem("Size " + size);
-			sizeGroup.add(item);
-			item.addActionListener(new ActionListener() {
-				@Override
-				public void actionPerformed (ActionEvent e) {
-					System.out.println("size " + size);
-					setFontSizes(size);
+		JMenu fontMenu = new JMenu("Font");
+		{
+			ButtonGroup sizeGroup = new ButtonGroup();
+			for (int n = 10; n <= 18; n++) {
+				final int nn = n;
+				JRadioButtonMenuItem item = new JRadioButtonMenuItem("Size " + n);
+				sizeGroup.add(item);
+				item.addActionListener(new ActionListener() {
+					@Override
+					public void actionPerformed (ActionEvent e) {
+						System.out.println("size " + nn);
+						setFontSizes(nn);
+					}
+				});
+				if (n == editorFont.getSize()) {
+					item.setSelected(true);
 				}
-			});
-			if (size == editorFont.getSize()) {
-				item.setSelected(true);
+				fontMenu.add(item);
 			}
-			sizeItems[n] = item;
-		}
-		
-		List<String> versions = new ArrayList<>();
-		versions.add(AUTO_VERSION);
-		for (Version v : Version.availableVersions()) {
-			versions.add(v.getVersion());
-		}
-		
-		JRadioButtonMenuItem[] versionItems = new JRadioButtonMenuItem[9];
-		ButtonGroup versionGroup = new ButtonGroup();
-		for (int n = 0; n < versionItems.length; n++) {
-			final String version = versions.get(n);
-			JRadioButtonMenuItem item = new JRadioButtonMenuItem("HL7 " + version);
-			versionGroup.add(item);
-			item.addActionListener(new ActionListener() {
-				@Override
-				public void actionPerformed (ActionEvent e) {
-					setMessageVersions(version);
-				}
-			});
-			if (version.equals(messageVersion)) {
-				item.setSelected(true);
-			}
-			versionItems[n] = item;
 		}
 		
 		JMenu fileMenu = new JMenu("File");
-		fileMenu.add(newItem);
-		fileMenu.add(openItem);
-		fileMenu.add(reopenItem);
-		fileMenu.add(saveItem);
-		fileMenu.add(closeItem);
-		
-		JMenu fontMenu = new JMenu("Font");
-		for (JMenuItem item : sizeItems) {
-			fontMenu.add(item);
+		{
+			JMenuItem newItem = new JMenuItem("New");
+			newItem.addActionListener(new ActionListener() {
+				@Override
+				public void actionPerformed (ActionEvent e) {
+					System.out.println("new");
+					addEditor();
+				}
+			});
+			
+			JMenuItem openItem = new JMenuItem("Open");
+			openItem.addActionListener(new ActionListener() {
+				@Override
+				public void actionPerformed (ActionEvent e) {
+					openFile();
+				}
+			});
+			
+			JMenuItem reopenItem = new JMenuItem("Re-open");
+			reopenItem.addActionListener(new ActionListener() {
+				@Override
+				public void actionPerformed (ActionEvent e) {
+					reopenFile();
+				}
+			});
+			
+			JMenuItem saveItem = new JMenuItem("Save As");
+			saveItem.addActionListener(new ActionListener() {
+				@Override
+				public void actionPerformed (ActionEvent e) {
+					saveCurrentEditor();
+				}
+			});
+			
+			JMenuItem closeItem = new JMenuItem("Close");
+			closeItem.addActionListener(new ActionListener() {
+				@Override
+				public void actionPerformed (ActionEvent e) {
+					closeCurrentEditor();
+				}
+			});
+			fileMenu.add(newItem);
+			fileMenu.add(openItem);
+			fileMenu.add(reopenItem);
+			fileMenu.add(saveItem);
+			fileMenu.add(closeItem);
 		}
 		
 		JMenu versionMenu = new JMenu("Version");
-		for (JMenuItem item : versionItems) {
-			versionMenu.add(item);
+		{
+			List<String> versions = new ArrayList<>();
+			versions.add(AUTO_VERSION);
+			for (Version v : Version.availableVersions()) {
+				versions.add(v.getVersion());
+			}
+			ButtonGroup versionGroup = new ButtonGroup();
+			for (final String version : versions) {
+				JRadioButtonMenuItem item = new JRadioButtonMenuItem("HL7 " + version);
+				versionGroup.add(item);
+				item.addActionListener(new ActionListener() {
+					@Override
+					public void actionPerformed (ActionEvent e) {
+						setMessageVersions(version);
+					}
+				});
+				if (version.equals(messageVersion)) {
+					item.setSelected(true);
+				}
+				versionMenu.add(item);
+			}
+		}
+		
+		JMenu messageMenu = new JMenu("Message");
+		{
+			{
+				JMenuItem item = new JMenuItem("Print Structure");
+				item.addActionListener(new ActionListener() {
+					@Override
+					public void actionPerformed (ActionEvent e) {
+						printStructure();
+					}
+				});
+				messageMenu.add(item);
+			}
+			{
+				JMenuItem item = new JMenuItem("Print Locations");
+				item.addActionListener(new ActionListener() {
+					@Override
+					public void actionPerformed (ActionEvent e) {
+						printLocations();
+					}
+				});
+				messageMenu.add(item);
+			}
 		}
 		
 		JMenuBar menuBar = new JMenuBar();
 		menuBar.add(fileMenu);
 		menuBar.add(fontMenu);
 		menuBar.add(versionMenu);
+		menuBar.add(messageMenu);
 		return menuBar;
+	}
+	
+	private void printStructure() {
+		System.out.println("print structure");
+		Component comp = tabs.getSelectedComponent();
+		if (comp instanceof EditorJPanel) {
+			String structure = ((EditorJPanel) comp).printStructure();
+			TextJDialog dialog = new TextJDialog(EditorJFrame.this, "Structure", editorFont, structure);
+			dialog.setVisible(true);
+		}
+	}
+	
+	private void printLocations() {
+		System.out.println("print locations");
+		Component comp = tabs.getSelectedComponent();
+		if (comp instanceof EditorJPanel) {
+			String structure = ((EditorJPanel) comp).printLocations();
+			TextJDialog dialog = new TextJDialog(EditorJFrame.this, "Locations", editorFont, structure);
+			dialog.setVisible(true);
+		}
 	}
 	
 	private void popup (Point p) {
