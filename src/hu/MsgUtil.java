@@ -39,6 +39,10 @@ public class MsgUtil {
 		 return response;
 	}
 	
+	public static boolean equals (Message msg1, Message msg2) throws Exception {
+		return msg1.encode().equals(msg2.encode());
+	}
+	
 	/** get info about the message and the index */
 	public static MsgInfo getInfo (final String msgLf, final String version) throws Exception {
 		// parse the message

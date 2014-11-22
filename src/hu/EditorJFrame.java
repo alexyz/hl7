@@ -42,7 +42,7 @@ public class EditorJFrame extends JFrame {
 	private File dir = new File(System.getProperty("user.dir"));
 	private Font editorFont = new Font("Monospaced", 0, 14);
 	private String messageVersion = AUTO_VERSION;
-	private String js = "message.encode()";
+	private String js = "util.replace('A', 'B');";
 	private String host = "localhost";
 	private int port = 1000;
 	
@@ -256,14 +256,22 @@ public class EditorJFrame extends JFrame {
 			EditorJPanel ep = (EditorJPanel) comp;
 			try {
 				MsgInfo info = ep.getMessageInfo();
+				MsgInfo info2 = ep.getMessageInfo();
 				Map<String,Object> m = new TreeMap<>();
 				m.put("message", info.msg);
 				m.put("terser", info.terser);
 				m.put("messageStr", info.msgCr);
+				m.put("util", new ScriptUtils(info.msg));
 				JSJDialog d = new JSJDialog(this, "Apply JavaScript", editorFont, m, js);
 				d.setLocationRelativeTo(frame);
 				d.setVisible(true);
 				js = d.getInputText();
+				if (!MsgUtil.equals(info.msg, info2.msg)) {
+					int opt = JOptionPane.showConfirmDialog(this, "Update message?", "Apply", JOptionPane.YES_NO_OPTION);
+					if (opt == JOptionPane.YES_OPTION) {
+						ep.setMessage(info.msg.encode().replace("\r", "\n"));
+					}
+				}
 				
 			} catch (Exception e) {
 				e.printStackTrace();

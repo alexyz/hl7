@@ -237,7 +237,7 @@ public class EditorJPanel extends JPanel {
 			String currentError = null;
 			for (ValidationMessage ve : errors) {
 				System.out.println("highlight " + ve);
-				if (ve.pos.equals(pos)) {
+				if (ve.pos.equals(pos) && ve.type == ValidationMessage.Type.ERROR) {
 					currentError = ve.msg;
 				}
 				
