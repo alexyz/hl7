@@ -27,7 +27,7 @@ public class MsgUtil {
 			return msgLf.replaceAll("\n(^|[A-Z][A-Z0-9]{2}" + Pattern.quote(segmentSep) + ")", "\r$1");
 			
 		} else {
-			return msgLf.replace('\n', Sep.SEGMENT);
+			return msgLf.replace('\n', MsgSep.SEGMENT);
 		}
 	}
 	
@@ -40,9 +40,9 @@ public class MsgUtil {
 	}
 	
 	/** get info about the message and the index */
-	public static Info getInfo (final String msgLf, final String version) throws Exception {
+	public static MsgInfo getInfo (final String msgLf, final String version) throws Exception {
 		// parse the message
-		final String msgCr = msgLf.replace('\n', Sep.SEGMENT);
+		final String msgCr = msgLf.replace('\n', MsgSep.SEGMENT);
 		// XXX closing this causes a null pointer exception
 		final HapiContext context = new DefaultHapiContext();
 		
@@ -58,17 +58,17 @@ public class MsgUtil {
 		final Terser terser = new Terser(msg);
 		
 		// do the validations
-		final Sep sep = new Sep(msg);
+		final MsgSep sep = new MsgSep(msg);
 		
 		// TODO validate missing/unexpected segments?
 		for (String s : msg.getNames()) {
 			System.out.println("name=" + s + " required=" + msg.isRequired(s) + " group=" + msg.isGroup(s) + " repeating=" + msg.isRepeating(s));
 		}
 		
-		return new Info(msg, terser, sep, msgCr);
+		return new MsgInfo(msg, terser, sep, msgCr);
 	}
 	
-	public static List<ValidationMessage> getErrors (Message msg, String msgCr, Sep sep, String msgVersion, String selectedValue) throws Exception {
+	public static List<ValidationMessage> getErrors (Message msg, String msgCr, MsgSep sep, String msgVersion, String selectedValue) throws Exception {
 		if (msgVersion.equals(EditorJFrame.AUTO_VERSION)) {
 			msgVersion = msg.getVersion();
 		}
@@ -78,8 +78,8 @@ public class MsgUtil {
 	}
 	
 	/** get the terser path for the message position */
-	public static TP getTerserPath (final Message msg, final Terser t, final Pos pos) throws Exception {
-		SL sl = getSegmentLocation(msg, pos.segOrd);
+	public static MsgPath getTerserPath (final Message msg, final Terser t, final MsgPos pos) throws Exception {
+		MsgSeg sl = getSegment(msg, pos.segOrd);
 		StringBuilder pathSb = new StringBuilder();
 		String desc = "";
 		String value = "";
@@ -100,7 +100,7 @@ public class MsgUtil {
 				}
 			}
 			path = pathSb.toString();
-			desc = "Message " + msg.getName() + ", " + getDescription(sl.segment, pos);
+			desc = getDescription(sl.segment, pos);
 			
 			if (pos.fieldOrd > 0) {
 				try {
@@ -113,15 +113,15 @@ public class MsgUtil {
 			}
 		}
 		
-		return new TP(path, value, desc);
+		return new MsgPath(path, value, desc);
 	}
 	
 	/** get position of segment path */
-	public static Pos getPosition (Message msg, Terser terser, String path) throws Exception {
+	public static MsgPos getPosition (Terser terser, String path) throws Exception {
 		Segment segment = terser.getSegment(path.substring(0, path.indexOf("-")));
 		int[] i = Terser.getIndices(path);
-		int s = getSegmentOrdinal(msg, segment);
-		return new Pos(s, i[0], i[1], i[2], i[3]);
+		int s = getSegmentOrdinal(segment.getMessage(), segment);
+		return new MsgPos(s, i[0], i[1], i[2], i[3]);
 	}
 	
 	/** get segment ordinal of segment */
@@ -153,14 +153,14 @@ public class MsgUtil {
 	}
 	
 	/** get segment and segment location from a segment ordinal */
-	public static SL getSegmentLocation (final Message msg, final int segmentOrd) {
-		final SL[] sl = new SL[1];
+	public static MsgSeg getSegment (final Message msg, final int segmentOrd) {
+		final MsgSeg[] sl = new MsgSeg[1];
 		MessageVisitorAdapter mv = new MessageVisitorAdapter() {
 			int s = 1;
 			@Override
 			public boolean start2 (Segment segment, Location location) throws HL7Exception {
 				if (s == segmentOrd) {
-					sl[0] = new SL(segment, location);
+					sl[0] = new MsgSeg(segment, location);
 					continue_ = false;
 				}
 				s++;
@@ -176,11 +176,21 @@ public class MsgUtil {
 	}
 	
 	/** get description of hl7 field, component and subcomponent */
-	public static String getDescription (final Segment segment, final Pos pos) {
+	public static String getDescription (final Message msg, final MsgPos pos) {
+		MsgSeg sl = getSegment(msg, pos.segOrd);
+		return getDescription(sl.segment, pos);
+	}
+	
+	/** get description of hl7 field, component and subcomponent */
+	public static String getDescription (final Segment segment, final MsgPos pos) {
 		System.out.println("get description " + pos);
+		Message msg = segment.getMessage();
+		
 		StringBuilder sb = new StringBuilder();
-		sb.append("segment " + segment.getName());
+		sb.append("Message " + msg.getName() + ", segment " + segment.getName());
+		
 		Class<?>[] type = new Class[] { segment.getClass() };
+		
 		String field = getDescription2(type, pos.fieldOrd);
 		if (field != null) {
 			sb.append(", field " + field);
@@ -248,7 +258,7 @@ public class MsgUtil {
 	}
 	
 	/** get the segment, field etc for the character index in the message */
-	public static Pos getPosition (final String msgstrCr, final Sep sep, final int index) {
+	public static MsgPos getPosition (final String msgstrCr, final MsgSep sep, final int index) {
 		if (msgstrCr.contains("\n")) {
 			throw new RuntimeException("getPosition requires msgCr");
 		}
@@ -256,7 +266,7 @@ public class MsgUtil {
 		int s = 1, f = 1, fr = 0, c = 1, sc = 1;
 		for (int i = 0; i < index; i++) {
 			char ch = msgstrCr.charAt(i);
-			if (ch == Sep.SEGMENT) {
+			if (ch == MsgSep.SEGMENT) {
 				s++;
 				f = 0;
 				fr = 0;
@@ -279,11 +289,11 @@ public class MsgUtil {
 			}
 		}
 		
-		return new Pos(s, f, fr, c, sc);
+		return new MsgPos(s, f, fr, c, sc);
 	}
 	
 	/** get the character indexes (start and end) of the given logical position */
-	public static int[] getIndexes (final String msgCr, final Sep sep, final Pos pos) {
+	public static int[] getIndexes (final String msgCr, final MsgSep sep, final MsgPos pos) {
 		System.out.println("get indexes: " + msgCr.length() + ", " + pos);
 		
 		if (msgCr.contains("\n")) {
@@ -323,7 +333,7 @@ public class MsgUtil {
 				f++;
 				
 			} else {
-				if (ch == Sep.SEGMENT) {
+				if (ch == MsgSep.SEGMENT) {
 					s++;
 					f = 0;
 					r = 0;

@@ -16,7 +16,7 @@ public class ValidatingMessageVisitor extends MessageVisitorAdapter {
 	private final ValidationContext vc = ValidationContextFactory.defaultValidation();
 	private final String version;
 	private final String msgCr;
-	private final Sep sep;
+	private final MsgSep sep;
 	private final List<ValidationMessage> errors = new ArrayList<>();
 	private final String selectedValue;
 	
@@ -25,7 +25,7 @@ public class ValidatingMessageVisitor extends MessageVisitorAdapter {
 	/**
 	 * msgCr - reference for getting index of errors
 	 */
-	public ValidatingMessageVisitor (String msgCr, Sep sep, String version, String selectedValue) {
+	public ValidatingMessageVisitor (String msgCr, MsgSep sep, String version, String selectedValue) {
 		this.msgCr = msgCr;
 		this.sep = sep;
 		this.version = version;
@@ -35,7 +35,7 @@ public class ValidatingMessageVisitor extends MessageVisitorAdapter {
 	@Override
 	public boolean start2 (Segment segment, Location location) throws HL7Exception {
 		segOrd++;
-		Pos pos = new Pos(segOrd, 0, 0, 1, 1);
+		MsgPos pos = new MsgPos(segOrd, 0, 0, 1, 1);
 		int[] index = MsgUtil.getIndexes(msgCr, sep, pos);
 		errors.add(new ValidationMessage(pos, segment.getName(), index, ValidationMessage.Type.SEGMENT));
 		return true;
@@ -68,7 +68,7 @@ public class ValidatingMessageVisitor extends MessageVisitorAdapter {
 			final int comp = Math.max(location.getComponent(), 1);
 			final int subcomp = Math.max(location.getSubcomponent(), 1);
 			final int field = location.getField();
-			final Pos pos = new Pos(segOrd, field, rep, comp, subcomp);
+			final MsgPos pos = new MsgPos(segOrd, field, rep, comp, subcomp);
 			final int[] index = MsgUtil.getIndexes(msgCr, sep, pos);
 			errors.add(new ValidationMessage(pos, vmMsg, index, vmType));
 		}

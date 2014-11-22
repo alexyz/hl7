@@ -54,12 +54,12 @@ public class EditorJPanel extends JPanel {
 			@Override
 			public void insertString (FilterBypass fb, int offset, String string, AttributeSet attr) throws BadLocationException {
 				System.out.println("document filter insert string");
-				super.insertString(fb, offset, string.replace(Sep.SEGMENT, '\n'), attr);
+				super.insertString(fb, offset, string.replace(MsgSep.SEGMENT, '\n'), attr);
 			}
 			@Override
 			public void replace (FilterBypass fb, int offset, int length, String text, AttributeSet attrs) throws BadLocationException {
 				System.out.println("document filter replace");
-				super.replace(fb, offset, length, text.replace(Sep.SEGMENT, '\n'), attrs);
+				super.replace(fb, offset, length, text.replace(MsgSep.SEGMENT, '\n'), attrs);
 			}
 		});
 		
@@ -112,7 +112,7 @@ public class EditorJPanel extends JPanel {
 		valueField.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed (ActionEvent e) {
-				setValue();
+				valueUpdated();
 			}
 		});
 		
@@ -120,7 +120,7 @@ public class EditorJPanel extends JPanel {
 		valueButton.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed (ActionEvent e) {
-				setValue();
+				valueUpdated();
 			}
 		});
 		
@@ -229,8 +229,8 @@ public class EditorJPanel extends JPanel {
 				selectedValue = msgLf.substring(selStart, selEnd);
 			}
 			
-			final Info info = MsgUtil.getInfo(msgLf, msgVersion);
-			final Pos pos = MsgUtil.getPosition(info.msgCr, info.sep, caretIndex);
+			final MsgInfo info = MsgUtil.getInfo(msgLf, msgVersion);
+			final MsgPos pos = MsgUtil.getPosition(info.msgCr, info.sep, caretIndex);
 			final List<ValidationMessage> errors = MsgUtil.getErrors(info.msg, info.msgCr, info.sep, msgVersion, selectedValue);
 			System.out.println("errors: " + errors.size());
 			
@@ -243,7 +243,7 @@ public class EditorJPanel extends JPanel {
 				
 				final int[] i = ve.indexes;
 				if (i != null) {
-					if (i[0] != msgArea.getSelectionStart() && i[1] != msgArea.getSelectionEnd()) {
+					if (i[0] != msgArea.getSelectionStart() || i[1] != msgArea.getSelectionEnd()) {
 						highlights.add(h.addHighlight(i[0], i[1], new DefaultHighlighter.DefaultHighlightPainter(getColor(ve.type))));
 					}
 					
@@ -253,7 +253,7 @@ public class EditorJPanel extends JPanel {
 			}
 			
 			// populate the fields
-			TP terserPath = MsgUtil.getTerserPath(info.msg, info.terser, pos);
+			MsgPath terserPath = MsgUtil.getTerserPath(info.msg, info.terser, pos);
 			if (terserPath != null) {
 				if (!pathField.getText().equals(terserPath.path)) {
 					pathField.setText(terserPath.path);
@@ -270,10 +270,10 @@ public class EditorJPanel extends JPanel {
 				}
 			}
 			
-		} catch (RuntimeException e) {
-			throw e;
-			
 		} catch (Exception e) {
+			if (e instanceof RuntimeException) {
+				e.printStackTrace();
+			}
 			System.out.println("could not update: " + e);
 			pathField.setText("");
 			valueField.setText("");
@@ -283,45 +283,54 @@ public class EditorJPanel extends JPanel {
 	
 	private void pathUpdated () {
 		System.out.println("path updated");
-		
 		try {
-			Info info = MsgUtil.getInfo(msgArea.getText(), msgVersion);
-			String value = info.terser.get(pathField.getText());
+			MsgInfo info = MsgUtil.getInfo(msgArea.getText(), msgVersion);
+			String userPath = pathField.getText();
+			String value = info.terser.get(userPath);
 			valueField.setText(value);
-			// TODO update description, caret (if bounded!)
+			
+			MsgPos pos = MsgUtil.getPosition(info.terser, userPath);
+			String desc = MsgUtil.getDescription(info.msg, pos);
+			descriptionArea.setText(desc);
 			
 		} catch (Exception e) {
+			if (e instanceof RuntimeException) {
+				e.printStackTrace();
+			}
 			System.out.println("could not update path: " + e);
 			descriptionArea.setText(e.toString());
 		}
 	}
 	
-	private void setValue () {
+	private void valueUpdated () {
 		System.out.println("value updated");
-		// FIXME set value shouldn't update path (e.g. when setting value to blank)
-		// and should prob update description with error
 		
 		try {
 			String msgLf = msgArea.getText();
 			String path = pathField.getText();
-			Info info = MsgUtil.getInfo(msgLf, msgVersion);
-			Pos pos = MsgUtil.getPosition(info.msg, info.terser, path);
+			MsgInfo info = MsgUtil.getInfo(msgLf, msgVersion);
+			MsgPos pos = MsgUtil.getPosition(info.terser, path);
+			
+			// set the new value
 			
 			info.terser.set(path, valueField.getText());
 			
 			// re-encode the whole message...
 			
 			String msgCr = info.msg.encode();
-			Info info2 = MsgUtil.getInfo(msgLf, msgVersion);
+			MsgInfo info2 = MsgUtil.getInfo(msgLf, msgVersion);
+			msgArea.setText(msgCr.replace(MsgSep.SEGMENT, '\n'));
 			
-			msgArea.setText(msgCr.replace(Sep.SEGMENT, '\n'));
+			// move the caret (doesn't work for msh-1)
 			
 			int[] i = MsgUtil.getIndexes(msgCr, info2.sep, pos);
 			if (i != null) {
+				System.out.println("new index is " + i[0] + ", " + i[1]);
 				msgArea.setCaretPosition(i[1]);
+				
+			} else {
+				System.out.println("could not get index of " + pos);
 			}
-			
-			update();
 			
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -388,32 +397,25 @@ public class EditorJPanel extends JPanel {
 				msgArea.setCaretPosition(s2);
 			}
 		} catch (Exception e) {
-			throw new RuntimeException("could not paste", e);
+			e.printStackTrace();
+			JOptionPane.showMessageDialog(SwingUtilities.getWindowAncestor(this), e.toString(), "Paste", JOptionPane.ERROR_MESSAGE);
 		}
 	}
 
-	public String printStructure () {
-		try {
-			String msgLf = msgArea.getText();
-			Info info = MsgUtil.getInfo(msgLf, msgVersion);
-			return info.msg.printStructure();
-		} catch (Exception e) {
-			return e.toString();
-		}
+	public String printStructure () throws Exception {
+		String msgLf = msgArea.getText();
+		MsgInfo info = MsgUtil.getInfo(msgLf, msgVersion);
+		return info.msg.printStructure();
 	}
 	
-	public Info getMessageInfo() throws Exception {
+	public MsgInfo getMessageInfo() throws Exception {
 		return MsgUtil.getInfo(msgArea.getText(), msgVersion);
 	}
 	
-	public String printLocations () {
-		try {
-			Info info = getMessageInfo();
-			StringMessageVisitor mv = new StringMessageVisitor();
-			MessageVisitors.visit(info.msg, mv);
-			return mv.toString();
-		} catch (Exception e) {
-			return e.toString();
-		}
+	public String printLocations () throws Exception {
+		MsgInfo info = getMessageInfo();
+		StringMessageVisitor mv = new StringMessageVisitor();
+		MessageVisitors.visit(info.msg, mv);
+		return mv.toString();
 	}
 }

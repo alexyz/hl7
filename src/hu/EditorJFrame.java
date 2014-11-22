@@ -230,7 +230,7 @@ public class EditorJFrame extends JFrame {
 		if (comp instanceof EditorJPanel) {
 			EditorJPanel ep = (EditorJPanel) comp;
 			try {
-				Info info = ep.getMessageInfo();
+				MsgInfo info = ep.getMessageInfo();
 				HostJDialog hostDialog = new HostJDialog(this, host, port);
 				hostDialog.setVisible(true);
 				if (hostDialog.isOk()) {
@@ -241,7 +241,9 @@ public class EditorJFrame extends JFrame {
 					TextJDialog textDialog = new TextJDialog(this, "Response", editorFont, text);
 					textDialog.setVisible(true);
 				}
+				
 			} catch (Exception e) {
+				e.printStackTrace();
 				JOptionPane.showMessageDialog(this, e.toString(), "Send", JOptionPane.ERROR_MESSAGE);
 			}
 		}
@@ -253,7 +255,7 @@ public class EditorJFrame extends JFrame {
 		if (comp instanceof EditorJPanel) {
 			EditorJPanel ep = (EditorJPanel) comp;
 			try {
-				Info info = ep.getMessageInfo();
+				MsgInfo info = ep.getMessageInfo();
 				Map<String,Object> m = new TreeMap<>();
 				m.put("message", info.msg);
 				m.put("terser", info.terser);
@@ -262,7 +264,9 @@ public class EditorJFrame extends JFrame {
 				d.setLocationRelativeTo(frame);
 				d.setVisible(true);
 				js = d.getInputText();
+				
 			} catch (Exception e) {
+				e.printStackTrace();
 				JOptionPane.showMessageDialog(this, e.toString(), "Apply", JOptionPane.ERROR_MESSAGE);
 			}
 		}
@@ -272,9 +276,16 @@ public class EditorJFrame extends JFrame {
 		System.out.println("print structure");
 		Component comp = tabs.getSelectedComponent();
 		if (comp instanceof EditorJPanel) {
-			String structure = ((EditorJPanel) comp).printStructure();
-			TextJDialog dialog = new TextJDialog(EditorJFrame.this, "Structure", editorFont, structure);
-			dialog.setVisible(true);
+			EditorJPanel ep = (EditorJPanel) comp;
+			try {
+				String structure = ep.printStructure();
+				TextJDialog dialog = new TextJDialog(EditorJFrame.this, "Structure", editorFont, structure);
+				dialog.setVisible(true);
+				
+			} catch (Exception e) {
+				e.printStackTrace();
+				JOptionPane.showMessageDialog(this, e.toString(), "Structure", JOptionPane.ERROR_MESSAGE);
+			}
 		}
 	}
 	
@@ -282,9 +293,16 @@ public class EditorJFrame extends JFrame {
 		System.out.println("print locations");
 		Component comp = tabs.getSelectedComponent();
 		if (comp instanceof EditorJPanel) {
-			String structure = ((EditorJPanel) comp).printLocations();
-			TextJDialog dialog = new TextJDialog(EditorJFrame.this, "Locations", editorFont, structure);
-			dialog.setVisible(true);
+			EditorJPanel ep = (EditorJPanel) comp;
+			try {
+				String structure = ep.printLocations();
+				TextJDialog dialog = new TextJDialog(EditorJFrame.this, "Locations", editorFont, structure);
+				dialog.setVisible(true);
+				
+			} catch (Exception e) {
+				e.printStackTrace();
+				JOptionPane.showMessageDialog(SwingUtilities.getWindowAncestor(this), e.toString(), "Locations", JOptionPane.ERROR_MESSAGE);
+			}
 		}
 	}
 	
@@ -372,7 +390,7 @@ public class EditorJFrame extends JFrame {
 				dir = fc.getCurrentDirectory();
 				// this bit might fail
 				File file = fc.getSelectedFile();
-				FileUtil.writeFile(file, ep.getMessage().replace('\n', Sep.SEGMENT));
+				FileUtil.writeFile(file, ep.getMessage().replace('\n', MsgSep.SEGMENT));
 				ep.setFile(file);
 				tabs.setTitleAt(tabs.getSelectedIndex(), file.getName());
 			}
