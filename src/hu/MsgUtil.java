@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.regex.*;
 
 import ca.uhn.hl7v2.*;
+import ca.uhn.hl7v2.app.Connection;
+import ca.uhn.hl7v2.app.Initiator;
 import ca.uhn.hl7v2.model.*;
 import ca.uhn.hl7v2.parser.CanonicalModelClassFactory;
 import ca.uhn.hl7v2.parser.PipeParser;
@@ -27,6 +29,14 @@ public class MsgUtil {
 		} else {
 			return msgLf.replace('\n', Sep.SEGMENT);
 		}
+	}
+	
+	public static Message send (Message msg, String host, int port) throws Exception {
+		final HapiContext context = new DefaultHapiContext();
+		 Connection connection = context.newClient(host, port, false);
+		 Initiator initiator = connection.getInitiator();
+		 Message response = initiator.sendAndReceive(msg);
+		 return response;
 	}
 	
 	/** get info about the message and the index */

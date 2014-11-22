@@ -170,6 +170,7 @@ public class EditorJPanel extends JPanel {
 		this.file = file;
 	}
 	
+	/** return message with segments separated with line feeds */
 	public String getMessage () {
 		return msgArea.getText();
 	}
@@ -189,6 +190,7 @@ public class EditorJPanel extends JPanel {
 		for (Component comp : Arrays.asList(msgArea, pathField, valueField, descriptionArea)) {
 			comp.setFont(f);
 		}
+		update();
 	}
 	
 	public String getMsgVersion () {
@@ -241,7 +243,9 @@ public class EditorJPanel extends JPanel {
 				
 				final int[] i = ve.indexes;
 				if (i != null) {
-					highlights.add(h.addHighlight(i[0], i[1], new DefaultHighlighter.DefaultHighlightPainter(getColor(ve.type))));
+					if (i[0] != msgArea.getSelectionStart() && i[1] != msgArea.getSelectionEnd()) {
+						highlights.add(h.addHighlight(i[0], i[1], new DefaultHighlighter.DefaultHighlightPainter(getColor(ve.type))));
+					}
 					
 				} else {
 					System.out.println("no indexes!");

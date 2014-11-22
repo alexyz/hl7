@@ -12,6 +12,7 @@ import javax.swing.*;
 
 import jsui.JSJDialog;
 import ca.uhn.hl7v2.Version;
+import ca.uhn.hl7v2.model.Message;
 
 /** main class and top level frame */
 public class EditorJFrame extends JFrame {
@@ -27,8 +28,12 @@ public class EditorJFrame extends JFrame {
 	public static void main (String[] args) {
 		System.out.println("user dir " + System.getProperty("user.dir"));
 		frame.setVisible(true);
-		for (String a : args) {
-			frame.addFileEditor(new File(a));
+		if (args.length == 0) {
+			frame.addEditor();
+		} else {
+			for (String a : args) {
+				frame.addFileEditor(new File(a));
+			}
 		}
 	}
 	
@@ -38,6 +43,8 @@ public class EditorJFrame extends JFrame {
 	private Font editorFont = new Font("Monospaced", 0, 14);
 	private String messageVersion = AUTO_VERSION;
 	private String js = "message.encode()";
+	private String host = "localhost";
+	private int port = 1000;
 	
 	public EditorJFrame () {
 		super("HAPI HL7|^~\\&!");
@@ -48,7 +55,7 @@ public class EditorJFrame extends JFrame {
 		tabs.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseClicked (MouseEvent e) {
-				 if (!e.isPopupTrigger() && e.getClickCount() >= 2) {
+				if (!e.isPopupTrigger() && e.getClickCount() >= 2) {
 					System.out.println("mouse click " + e.getClickCount());
 					addEditor();
 				}
@@ -67,8 +74,6 @@ public class EditorJFrame extends JFrame {
 			}
 		});
 		tabs.setTransferHandler(new FileTransferHandler());
-		
-		addEditor();
 		
 		setContentPane(tabs);
 		setPreferredSize(new Dimension(800, 600));
@@ -199,6 +204,16 @@ public class EditorJFrame extends JFrame {
 				});
 				messageMenu.add(item);
 			}
+			{
+				JMenuItem item = new JMenuItem("Send...");
+				item.addActionListener(new ActionListener() {
+					@Override
+					public void actionPerformed (ActionEvent e) {
+						send();
+					}
+				});
+				messageMenu.add(item);
+			}
 		}
 		
 		JMenuBar menuBar = new JMenuBar();
@@ -207,6 +222,29 @@ public class EditorJFrame extends JFrame {
 		menuBar.add(versionMenu);
 		menuBar.add(messageMenu);
 		return menuBar;
+	}
+	
+	private void send() {
+		System.out.println("send");
+		Component comp = tabs.getSelectedComponent();
+		if (comp instanceof EditorJPanel) {
+			EditorJPanel ep = (EditorJPanel) comp;
+			try {
+				Info info = ep.getMessageInfo();
+				HostJDialog hostDialog = new HostJDialog(this, host, port);
+				hostDialog.setVisible(true);
+				if (hostDialog.isOk()) {
+					host = hostDialog.getHost();
+					port = hostDialog.getPort();
+					Message response = MsgUtil.send(info.msg, host, port);
+					String text = response.encode();
+					TextJDialog textDialog = new TextJDialog(this, "Response", editorFont, text);
+					textDialog.setVisible(true);
+				}
+			} catch (Exception e) {
+				JOptionPane.showMessageDialog(this, e.toString(), "Send", JOptionPane.ERROR_MESSAGE);
+			}
+		}
 	}
 	
 	private void applyJs() {
@@ -225,7 +263,7 @@ public class EditorJFrame extends JFrame {
 				d.setVisible(true);
 				js = d.getInputText();
 			} catch (Exception e) {
-				e.printStackTrace();
+				JOptionPane.showMessageDialog(this, e.toString(), "Apply", JOptionPane.ERROR_MESSAGE);
 			}
 		}
 	}

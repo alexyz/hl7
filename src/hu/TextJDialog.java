@@ -34,6 +34,7 @@ public class TextJDialog extends JDialog implements ActionListener {
 		contentPanel.add(scroller, BorderLayout.CENTER);
 		contentPanel.add(buttonPanel, BorderLayout.SOUTH);
 		
+		setModal(true);
 		setContentPane(contentPanel);
 		setPreferredSize(new Dimension(640, 480));
 		pack();
