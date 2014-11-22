@@ -2,11 +2,13 @@
 <project default="jar">
 
 	<target name="jar">
-		<jar destfile="dist/hl7.jar" basedir="bin/">
+		<jar destfile="dist/hl7.jar">
 			<manifest>
 				<attribute name="Main-Class" value="hu.EditorJFrame" />
 				<attribute name="Class-Path" value="hl7deps.jar" />
 			</manifest>
+			<fileset dir="bin" />
+			<fileset dir="../jsui/bin" />
 		</jar>
 		<jar destfile="dist/hl7deps.jar">
 			<zipfileset src="lib/hapi-base-2.2.jar" />

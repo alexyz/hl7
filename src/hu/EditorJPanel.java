@@ -398,10 +398,13 @@ public class EditorJPanel extends JPanel {
 		}
 	}
 	
+	public Info getMessageInfo() throws Exception {
+		return MsgUtil.getInfo(msgArea.getText(), msgVersion);
+	}
+	
 	public String printLocations () {
 		try {
-			String msgLf = msgArea.getText();
-			Info info = MsgUtil.getInfo(msgLf, msgVersion);
+			Info info = getMessageInfo();
 			StringMessageVisitor mv = new StringMessageVisitor();
 			MessageVisitors.visit(info.msg, mv);
 			return mv.toString();

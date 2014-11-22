@@ -6,11 +6,11 @@ import java.awt.Font;
 import java.awt.Point;
 import java.awt.event.*;
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 import javax.swing.*;
 
+import jsui.JSJDialog;
 import ca.uhn.hl7v2.Version;
 
 /** main class and top level frame */
@@ -18,18 +18,18 @@ public class EditorJFrame extends JFrame {
 	
 	public static final String AUTO_VERSION = "Auto";
 	
-	private static EditorJFrame frame;
+	private static final EditorJFrame frame = new EditorJFrame();
 	
-	public static synchronized EditorJFrame getInstance() {
-		if (frame == null) {
-			frame = new EditorJFrame();
-		}
+	public static EditorJFrame getInstance() {
 		return frame;
 	}
 	
 	public static void main (String[] args) {
 		System.out.println("user dir " + System.getProperty("user.dir"));
-		getInstance().setVisible(true);
+		frame.setVisible(true);
+		for (String a : args) {
+			frame.addFileEditor(new File(a));
+		}
 	}
 	
 	private final JTabbedPane tabs = new JTabbedPane();
@@ -37,6 +37,7 @@ public class EditorJFrame extends JFrame {
 	private File dir = new File(System.getProperty("user.dir"));
 	private Font editorFont = new Font("Monospaced", 0, 14);
 	private String messageVersion = AUTO_VERSION;
+	private String js = "message.encode()";
 	
 	public EditorJFrame () {
 		super("HAPI HL7|^~\\&!");
@@ -188,6 +189,16 @@ public class EditorJFrame extends JFrame {
 				});
 				messageMenu.add(item);
 			}
+			{
+				JMenuItem item = new JMenuItem("Apply JavaScript...");
+				item.addActionListener(new ActionListener() {
+					@Override
+					public void actionPerformed (ActionEvent e) {
+						applyJs();
+					}
+				});
+				messageMenu.add(item);
+			}
 		}
 		
 		JMenuBar menuBar = new JMenuBar();
@@ -196,6 +207,27 @@ public class EditorJFrame extends JFrame {
 		menuBar.add(versionMenu);
 		menuBar.add(messageMenu);
 		return menuBar;
+	}
+	
+	private void applyJs() {
+		System.out.println("apply js");
+		Component comp = tabs.getSelectedComponent();
+		if (comp instanceof EditorJPanel) {
+			EditorJPanel ep = (EditorJPanel) comp;
+			try {
+				Info info = ep.getMessageInfo();
+				Map<String,Object> m = new TreeMap<>();
+				m.put("message", info.msg);
+				m.put("terser", info.terser);
+				m.put("messageStr", info.msgCr);
+				JSJDialog d = new JSJDialog(this, "Apply JavaScript", editorFont, m, js);
+				d.setLocationRelativeTo(frame);
+				d.setVisible(true);
+				js = d.getInputText();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
 	}
 	
 	private void printStructure() {
