@@ -229,7 +229,7 @@ public class EditorJPanel extends JPanel {
 				selectedValue = msgLf.substring(selStart, selEnd);
 			}
 			
-			final MsgInfo info = MsgUtil.getInfo(msgLf, msgVersion);
+			final MsgInfo info = getMessageInfo();
 			final MsgPos pos = MsgUtil.getPosition(info.msgCr, info.sep, caretIndex);
 			final List<ValidationMessage> errors = MsgUtil.getErrors(info.msg, info.msgCr, info.sep, msgVersion, selectedValue);
 			System.out.println("errors: " + errors.size());
@@ -284,12 +284,12 @@ public class EditorJPanel extends JPanel {
 	private void pathUpdated () {
 		System.out.println("path updated");
 		try {
-			MsgInfo info = MsgUtil.getInfo(msgArea.getText(), msgVersion);
-			String userPath = pathField.getText();
-			String value = info.terser.get(userPath);
+			MsgInfo info = getMessageInfo();
+			String path = pathField.getText();
+			String value = info.terser.get(path);
 			valueField.setText(value);
 			
-			MsgPos pos = MsgUtil.getPosition(info.terser, userPath);
+			MsgPos pos = MsgUtil.getPosition(info.terser, path);
 			String desc = MsgUtil.getDescription(info.msg, pos);
 			descriptionArea.setText(desc);
 			
@@ -308,7 +308,7 @@ public class EditorJPanel extends JPanel {
 		try {
 			String msgLf = msgArea.getText();
 			String path = pathField.getText();
-			MsgInfo info = MsgUtil.getInfo(msgLf, msgVersion);
+			MsgInfo info = getMessageInfo();
 			MsgPos pos = MsgUtil.getPosition(info.terser, path);
 			
 			// set the new value
@@ -318,12 +318,11 @@ public class EditorJPanel extends JPanel {
 			// re-encode the whole message...
 			
 			String msgCr = info.msg.encode();
-			MsgInfo info2 = MsgUtil.getInfo(msgLf, msgVersion);
 			msgArea.setText(msgCr.replace(MsgSep.SEGMENT, '\n'));
 			
 			// move the caret (doesn't work for msh-1)
 			
-			int[] i = MsgUtil.getIndexes(msgCr, info2.sep, pos);
+			int[] i = MsgUtil.getIndexes(msgCr, new MsgSep(msgCr), pos);
 			if (i != null) {
 				System.out.println("new index is " + i[0] + ", " + i[1]);
 				msgArea.setCaretPosition(i[1]);
@@ -402,20 +401,8 @@ public class EditorJPanel extends JPanel {
 		}
 	}
 
-	public String printStructure () throws Exception {
-		String msgLf = msgArea.getText();
-		MsgInfo info = MsgUtil.getInfo(msgLf, msgVersion);
-		return info.msg.printStructure();
-	}
-	
 	public MsgInfo getMessageInfo() throws Exception {
-		return MsgUtil.getInfo(msgArea.getText(), msgVersion);
+		return MsgUtil.getInfo(msgArea.getText().replace("\n", "\r"), msgVersion);
 	}
-	
-	public String printLocations () throws Exception {
-		MsgInfo info = getMessageInfo();
-		StringMessageVisitor mv = new StringMessageVisitor();
-		MessageVisitors.visit(info.msg, mv);
-		return mv.toString();
-	}
+
 }

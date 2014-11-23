@@ -10,7 +10,6 @@ public class FileUtil {
 		try (BufferedReader br = new BufferedReader(new FileReader(file))) {
 			String l;
 			while ((l = br.readLine()) != null) {
-				System.out.println("l=" + l);
 				sb.append(l).append("\n");
 			}
 		}
@@ -18,11 +17,9 @@ public class FileUtil {
 	}
 	
 	/** write file with no interpretation of line terminator */
-	public static void writeFile (File file, String text) {
+	public static void writeFile (File file, String text) throws Exception {
 		try (FileWriter fw = new FileWriter(file)) {
 			fw.write(text.toCharArray());
-		} catch (Exception e) {
-			throw new RuntimeException("could not open file " + file, e);
 		}
 	}
 	

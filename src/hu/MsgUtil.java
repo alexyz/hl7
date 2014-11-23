@@ -39,17 +39,6 @@ public class MsgUtil {
 		return versions;
 	}
 	
-	// XXX
-	public static String toMsgCr (String msgLf) {
-		if (msgLf.length() > 4) {
-			String segmentSep = msgLf.substring(3, 4);
-			return msgLf.replaceAll("\n(^|[A-Z][A-Z0-9]{2}" + Pattern.quote(segmentSep) + ")", "\r$1");
-			
-		} else {
-			return msgLf.replace('\n', MsgSep.SEGMENT);
-		}
-	}
-	
 	public static Message send (Message msg, String host, int port) throws Exception {
 		final HapiContext context = new DefaultHapiContext();
 		 Connection connection = context.newClient(host, port, false);
@@ -88,10 +77,9 @@ public class MsgUtil {
 	}
 	
 	/** get info about the message and the index */
-	public static MsgInfo getInfo (final String msgLf, final String version) throws Exception {
+	public static MsgInfo getInfo (final String msgCr, final String version) throws Exception {
 		System.out.println("get info");
 		// parse the message
-		final String msgCr = msgLf.replace('\n', MsgSep.SEGMENT);
 		final HapiContext context = getContext(version);
 		final PipeParser p = context.getPipeParser();
 		final Message msg = p.parse(msgCr);
@@ -424,4 +412,9 @@ public class MsgUtil {
 		}
 	}
 	
+	public static String printLocations (Message msg) throws Exception {
+		StringMessageVisitor mv = new StringMessageVisitor();
+		MessageVisitors.visit(msg, mv);
+		return mv.toString();
+	}	
 }

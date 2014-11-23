@@ -11,7 +11,6 @@ import java.util.*;
 import javax.swing.*;
 
 import jsui.JSJDialog;
-import ca.uhn.hl7v2.Version;
 import ca.uhn.hl7v2.model.Message;
 
 /** main class and top level frame */
@@ -231,7 +230,7 @@ public class EditorJFrame extends JFrame {
 					host = hostDialog.getHost();
 					port = hostDialog.getPort();
 					Message response = MsgUtil.send(info.msg, host, port);
-					String text = response.encode();
+					String text = response.encode().replace("\r", "\n");
 					TextJDialog textDialog = new TextJDialog(this, "Response", editorFont, text);
 					textDialog.setVisible(true);
 				}
@@ -280,7 +279,8 @@ public class EditorJFrame extends JFrame {
 		if (comp instanceof EditorJPanel) {
 			EditorJPanel ep = (EditorJPanel) comp;
 			try {
-				String structure = ep.printStructure();
+				MsgInfo info = ep.getMessageInfo();
+				String structure = info.msg.printStructure();
 				TextJDialog dialog = new TextJDialog(EditorJFrame.this, "Structure", editorFont, structure);
 				dialog.setVisible(true);
 				
@@ -297,8 +297,9 @@ public class EditorJFrame extends JFrame {
 		if (comp instanceof EditorJPanel) {
 			EditorJPanel ep = (EditorJPanel) comp;
 			try {
-				String structure = ep.printLocations();
-				TextJDialog dialog = new TextJDialog(EditorJFrame.this, "Locations", editorFont, structure);
+				MsgInfo info = ep.getMessageInfo();
+				String locations = MsgUtil.printLocations(info.msg);
+				TextJDialog dialog = new TextJDialog(EditorJFrame.this, "Locations", editorFont, locations);
 				dialog.setVisible(true);
 				
 			} catch (Exception e) {
@@ -402,11 +403,16 @@ public class EditorJFrame extends JFrame {
 			}
 			if (fc.showSaveDialog(EditorJFrame.this) == JFileChooser.APPROVE_OPTION) {
 				dir = fc.getCurrentDirectory();
-				// this bit might fail
 				File file = fc.getSelectedFile();
-				FileUtil.writeFile(file, ep.getMessage().replace('\n', MsgSep.SEGMENT));
-				ep.setFile(file);
-				tabs.setTitleAt(tabs.getSelectedIndex(), file.getName());
+				try {
+					FileUtil.writeFile(file, ep.getMessage().replace('\n', MsgSep.SEGMENT));
+					ep.setFile(file);
+					tabs.setTitleAt(tabs.getSelectedIndex(), file.getName());
+					
+				} catch (Exception e) {
+					e.printStackTrace();
+					JOptionPane.showMessageDialog(this, e.toString(), "Save", JOptionPane.ERROR_MESSAGE);
+				}
 			}
 		}
 	}
