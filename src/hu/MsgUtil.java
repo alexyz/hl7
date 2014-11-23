@@ -107,10 +107,17 @@ public class MsgUtil {
 	}
 	
 	public static List<ValidationMessage> getErrors (Message msg, String msgCr, MsgSep sep, String msgVersion, String selectedValue) throws Exception {
-		// XXX is this needed?
-//		if (msgVersion.equals(EditorJFrame.DEFAULT_VERSION)) {
-//			msgVersion = msg.getVersion();
-//		}
+		switch (msgVersion) {
+			case DEFAULT_VERSION:
+			case GENERIC_VERSION:
+				msgVersion = msg.getVersion();
+				break;
+			case HIGHEST_VERSION:
+				msgVersion = Version.latestVersion().getVersion();
+				break;
+			default:
+				break;
+		}
 		ValidatingMessageVisitor vmv = new ValidatingMessageVisitor(msgCr, sep, msgVersion, selectedValue);
 		MessageVisitors.visit(msg, vmv);
 		return vmv.getErrors();
