@@ -1,7 +1,10 @@
 package hu;
 
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.regex.*;
 
 import ca.uhn.hl7v2.*;
@@ -9,15 +12,31 @@ import ca.uhn.hl7v2.app.Connection;
 import ca.uhn.hl7v2.app.Initiator;
 import ca.uhn.hl7v2.model.*;
 import ca.uhn.hl7v2.parser.CanonicalModelClassFactory;
+import ca.uhn.hl7v2.parser.GenericModelClassFactory;
 import ca.uhn.hl7v2.parser.PipeParser;
 import ca.uhn.hl7v2.util.Terser;
 import ca.uhn.hl7v2.validation.impl.ValidationContextFactory;
 
 /** utilities for hl7 messages */
 public class MsgUtil {
+
+	public static final String HIGHEST_VERSION = "Highest";
+	public static final String DEFAULT_VERSION = "Default";
+	public static final String GENERIC_VERSION = "Generic";
 	
 	private MsgUtil () {
 		//
+	}
+	
+	public static List<String> getVersions() {
+		List<String> versions = new ArrayList<>();
+		versions.add(MsgUtil.HIGHEST_VERSION);
+		versions.add(MsgUtil.DEFAULT_VERSION);
+		versions.add(MsgUtil.GENERIC_VERSION);
+		for (Version v : Version.availableVersions()) {
+			versions.add(v.getVersion());
+		}
+		return versions;
 	}
 	
 	// XXX
@@ -43,28 +62,43 @@ public class MsgUtil {
 		return msg1.encode().equals(msg2.encode());
 	}
 	
+	private static final Map<String,DefaultHapiContext> contexts = new TreeMap<>();
+	
+	public static DefaultHapiContext getContext(String version) {
+		DefaultHapiContext c = contexts.get(version);
+		if (c == null) {
+			switch (version) {
+				case DEFAULT_VERSION:
+					c = new DefaultHapiContext();
+					break;
+				case GENERIC_VERSION:
+					c = new DefaultHapiContext(new GenericModelClassFactory());
+					break;
+				case HIGHEST_VERSION:
+					c = getContext(Version.latestVersion().getVersion());
+					break;
+				default:
+					c = new DefaultHapiContext(new CanonicalModelClassFactory(version));
+					break;
+			}
+			c.setValidationContext(ValidationContextFactory.noValidation());
+			contexts.put(version, c);
+		}
+		return c;
+	}
+	
 	/** get info about the message and the index */
 	public static MsgInfo getInfo (final String msgLf, final String version) throws Exception {
+		System.out.println("get info");
 		// parse the message
 		final String msgCr = msgLf.replace('\n', MsgSep.SEGMENT);
-		// XXX closing this causes a null pointer exception
-		final HapiContext context = new DefaultHapiContext();
-		
-		if (!version.equals(EditorJFrame.AUTO_VERSION)) {
-			CanonicalModelClassFactory mcf = new CanonicalModelClassFactory(version);
-			context.setModelClassFactory(mcf);
-		}
-		
-		PipeParser p = context.getPipeParser();
-		p.setValidationContext(ValidationContextFactory.noValidation());
+		final HapiContext context = getContext(version);
+		final PipeParser p = context.getPipeParser();
 		final Message msg = p.parse(msgCr);
-		
 		final Terser terser = new Terser(msg);
+		final MsgSep sep = new MsgSep(msgCr);
+		System.out.println("sep: " + sep);
 		
-		// do the validations
-		final MsgSep sep = new MsgSep(msg);
-		
-		// TODO validate missing/unexpected segments?
 		for (String s : msg.getNames()) {
 			System.out.println("name=" + s + " required=" + msg.isRequired(s) + " group=" + msg.isGroup(s) + " repeating=" + msg.isRepeating(s));
 		}
@@ -73,9 +107,10 @@ public class MsgUtil {
 	}
 	
 	public static List<ValidationMessage> getErrors (Message msg, String msgCr, MsgSep sep, String msgVersion, String selectedValue) throws Exception {
-		if (msgVersion.equals(EditorJFrame.AUTO_VERSION)) {
-			msgVersion = msg.getVersion();
-		}
+		// XXX is this needed?
+//		if (msgVersion.equals(EditorJFrame.DEFAULT_VERSION)) {
+//			msgVersion = msg.getVersion();
+//		}
 		ValidatingMessageVisitor vmv = new ValidatingMessageVisitor(msgCr, sep, msgVersion, selectedValue);
 		MessageVisitors.visit(msg, vmv);
 		return vmv.getErrors();

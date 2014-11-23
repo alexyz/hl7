@@ -5,7 +5,7 @@ import java.io.*;
 public class FileUtil {
 	
 	/** read file with lines separated by LF */
-	public static String readFile (File file) {
+	public static String readFile (File file) throws Exception {
 		StringBuilder sb = new StringBuilder();
 		try (BufferedReader br = new BufferedReader(new FileReader(file))) {
 			String l;
@@ -13,8 +13,6 @@ public class FileUtil {
 				System.out.println("l=" + l);
 				sb.append(l).append("\n");
 			}
-		} catch (Exception e) {
-			throw new RuntimeException("could not open file " + file, e);
 		}
 		return sb.toString();
 	}

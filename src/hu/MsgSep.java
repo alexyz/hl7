@@ -1,8 +1,5 @@
 package hu;
 
-import ca.uhn.hl7v2.HL7Exception;
-import ca.uhn.hl7v2.model.Message;
-
 /** represents separator characters in a message */
 public class MsgSep {
 
@@ -14,11 +11,26 @@ public class MsgSep {
 	public final char component;
 	public final char subcomponent;
 	
-	public MsgSep (final Message m) throws HL7Exception {
-		field = m.getFieldSeparatorValue();
-		final String msh2 = m.getEncodingCharactersValue();
-		repetition = msh2.charAt(1);
-		component = msh2.charAt(0);
-		subcomponent = msh2.charAt(3);
+	public MsgSep (String msgCr) {
+		// MSH|^~\&
+		if (msgCr.startsWith("MSH") && msgCr.length() >= 8) {
+			field = msgCr.charAt(3);
+			component = msgCr.charAt(4);
+			repetition = msgCr.charAt(5);
+			subcomponent = msgCr.charAt(7);
+		} else {
+			// guess
+			field = '|';
+			component = '^';
+			repetition = '~';
+			subcomponent = '&';
+		}
 	}
+
+	@Override
+	public String toString () {
+		return "MsgSep [field=" + field + " repetition=" + repetition + " component=" + component + " subcomponent=" + subcomponent + "]";
+	}
+	
+	
 }

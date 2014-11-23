@@ -17,7 +17,6 @@ import ca.uhn.hl7v2.model.Message;
 /** main class and top level frame */
 public class EditorJFrame extends JFrame {
 	
-	public static final String AUTO_VERSION = "Auto";
 	
 	private static final EditorJFrame frame = new EditorJFrame();
 	
@@ -41,7 +40,7 @@ public class EditorJFrame extends JFrame {
 	
 	private File dir = new File(System.getProperty("user.dir"));
 	private Font editorFont = new Font("Monospaced", 0, 14);
-	private String messageVersion = AUTO_VERSION;
+	private String messageVersion = MsgUtil.HIGHEST_VERSION;
 	private String js = "util.replace('A', 'B');";
 	private String host = "localhost";
 	private int port = 1000;
@@ -150,14 +149,9 @@ public class EditorJFrame extends JFrame {
 		
 		JMenu versionMenu = new JMenu("Version");
 		{
-			List<String> versions = new ArrayList<>();
-			versions.add(AUTO_VERSION);
-			for (Version v : Version.availableVersions()) {
-				versions.add(v.getVersion());
-			}
 			ButtonGroup versionGroup = new ButtonGroup();
-			for (final String version : versions) {
-				JRadioButtonMenuItem item = new JRadioButtonMenuItem("HL7 " + version);
+			for (final String version : MsgUtil.getVersions()) {
+				JRadioButtonMenuItem item = new JRadioButtonMenuItem(version);
 				versionGroup.add(item);
 				item.addActionListener(new ActionListener() {
 					@Override
@@ -343,12 +337,18 @@ public class EditorJFrame extends JFrame {
 	}
 	
 	public void addFileEditor (File file) {
-		String msgLf = FileUtil.readFile(file);
-		EditorJPanel ep = new EditorJPanel();
-		ep.setMsgVersion(messageVersion);
-		ep.setFile(file);
-		ep.setMessage(msgLf);
-		addEditor(file.getName(), ep);
+		try {
+			String msgLf = FileUtil.readFile(file);
+			EditorJPanel ep = new EditorJPanel();
+			ep.setMsgVersion(messageVersion);
+			ep.setFile(file);
+			ep.setMessage(msgLf);
+			addEditor(file.getName(), ep);
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+			JOptionPane.showMessageDialog(this, e.toString(), "Open", JOptionPane.ERROR_MESSAGE);
+		}
 	}
 	
 	private void addEditor (String name, EditorJPanel ep) {
@@ -376,8 +376,14 @@ public class EditorJFrame extends JFrame {
 			File file = ep.getFile();
 			if (file != null) {
 				if (JOptionPane.showConfirmDialog(this, "Re-open file?", "Re-open", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
-					String text = FileUtil.readFile(file);
-					ep.setMessage(text);
+					try {
+						String text = FileUtil.readFile(file);
+						ep.setMessage(text);
+						
+					} catch (Exception e) {
+						e.printStackTrace();
+						JOptionPane.showMessageDialog(this, e.toString(), "Re-open", JOptionPane.ERROR_MESSAGE);
+					}
 				}
 			}
 		}
