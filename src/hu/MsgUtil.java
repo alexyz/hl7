@@ -240,39 +240,39 @@ public class MsgUtil {
 		
 		StringBuilder sb = new StringBuilder();
 		String msgType = msg.getName().substring(0, 3);
-		sb.append(msg.getName() + " " + messages.getProperty(msgType, "unknown") + ", ");
-		sb.append("segment " + segment.getName() + " " + segments.getProperty(segment.getName(), "unknown"));
+		sb.append("Message " + msg.getName() + ": " + messages.getProperty(msgType, "unknown") + "; ");
+		sb.append("segment " + segment.getName() + ": " + segments.getProperty(segment.getName(), "unknown"));
 		
 		Class<?>[] type = new Class[] { segment.getClass() };
 		
 		String field = getDescription2(type, pos.fieldOrd);
 		if (field != null) {
-			sb.append(", field " + field);
+			sb.append("; field " + pos.fieldOrd + ": " + field);
 			if (type[0] != null) {
 				String comp = getDescription2(type, pos.compOrd);
 				if (comp != null) {
-					sb.append(", component " + comp);
+					sb.append("; component " + pos.compOrd + ": " + comp);
 					if (type[0] != null) {
 						String subcomp = getDescription2(type, pos.subCompOrd);
 						if (subcomp != null) {
-							sb.append(", subcomponent " + subcomp);
+							sb.append("; subcomponent " + pos.subCompOrd + ": " + subcomp);
 						} else {
-							sb.append(", unknown subcomponent");
+							sb.append("; unknown subcomponent " + pos.subCompOrd);
 						}
 					} else if (pos.subCompOrd > 1) {
-						sb.append(", unknown subcomponent");
+						sb.append("; unknown subcomponent " + pos.subCompOrd);
 					}
 				} else {
-					sb.append(", unknown component");
+					sb.append("; unknown component " + pos.compOrd);
 				}
 			} else if (pos.compOrd > 1) {
-				sb.append(", unknown component");
+				sb.append("; unknown component " + pos.compOrd);
 				
 			} else if (pos.subCompOrd > 1) {
-				sb.append(", unknown subcomponent");
+				sb.append("; unknown subcomponent " + pos.subCompOrd);
 			}
 		} else {
-			sb.append(", unknown field");
+			sb.append("; unknown field " + pos.fieldOrd);
 		}
 		return sb.toString();
 	}

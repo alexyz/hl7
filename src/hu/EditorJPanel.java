@@ -17,6 +17,8 @@ import javax.swing.border.TitledBorder;
 import javax.swing.event.*;
 import javax.swing.text.*;
 
+import org.apache.commons.lang3.StringEscapeUtils;
+
 public class EditorJPanel extends JPanel {
 	
 	private static final Color ERROR_COL = new Color(255, 192, 192);
@@ -111,7 +113,7 @@ public class EditorJPanel extends JPanel {
 		valueField.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed (ActionEvent e) {
-				valueUpdated();
+				valueAction();
 			}
 		});
 		
@@ -119,7 +121,7 @@ public class EditorJPanel extends JPanel {
 		valueButton.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed (ActionEvent e) {
-				valueUpdated();
+				valueAction();
 			}
 		});
 		
@@ -137,7 +139,7 @@ public class EditorJPanel extends JPanel {
 		pathPanel.add(pathButton, BorderLayout.EAST);
 		
 		JPanel valuePanel = new JPanel(new BorderLayout());
-		valuePanel.setBorder(new TitledBorder("Value"));
+		valuePanel.setBorder(new TitledBorder("Java String Value"));
 		valuePanel.add(valueField, BorderLayout.CENTER);
 		valuePanel.add(valueButton, BorderLayout.EAST);
 		
@@ -257,8 +259,9 @@ public class EditorJPanel extends JPanel {
 				if (!pathField.getText().equals(terserPath.path)) {
 					pathField.setText(terserPath.path);
 				}
-				if (!valueField.getText().equals(terserPath.value)) {
-					valueField.setText(terserPath.value);
+				String javaValue = StringEscapeUtils.escapeJava(terserPath.value);
+				if (!valueField.getText().equals(javaValue)) {
+					valueField.setText(javaValue);
 				}
 				String desc = terserPath.description;
 				if (currentError != null) {
@@ -286,7 +289,7 @@ public class EditorJPanel extends JPanel {
 			MsgInfo info = getMessageInfo();
 			String path = pathField.getText();
 			String value = info.terser.get(path);
-			valueField.setText(value);
+			valueField.setText(StringEscapeUtils.escapeJava(value));
 			
 			MsgPos pos = MsgUtil.getPosition(info.terser, path);
 			String desc = MsgUtil.getDescription(info.msg, pos);
@@ -301,18 +304,17 @@ public class EditorJPanel extends JPanel {
 		}
 	}
 	
-	private void valueUpdated () {
+	private void valueAction () {
 		System.out.println("value updated");
 		
 		try {
-			String msgLf = msgArea.getText();
 			String path = pathField.getText();
 			MsgInfo info = getMessageInfo();
 			MsgPos pos = MsgUtil.getPosition(info.terser, path);
 			
 			// set the new value
 			
-			info.terser.set(path, valueField.getText());
+			info.terser.set(path, StringEscapeUtils.unescapeJava(valueField.getText()));
 			
 			// re-encode the whole message...
 			
