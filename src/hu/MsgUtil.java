@@ -1,9 +1,11 @@
 package hu;
 
+import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.TreeMap;
 import java.util.regex.*;
 
@@ -19,10 +21,26 @@ import ca.uhn.hl7v2.validation.impl.ValidationContextFactory;
 
 /** utilities for hl7 messages */
 public class MsgUtil {
-
+	
 	public static final String HIGHEST_VERSION = "Highest";
 	public static final String DEFAULT_VERSION = "Default";
 	public static final String GENERIC_VERSION = "Generic";
+	
+	private static final Properties messages = new Properties();
+	private static final Properties segments = new Properties();
+	
+	static {
+		try (InputStream is = MsgUtil.class.getResourceAsStream("/messages.txt")) {
+			messages.load(is);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		try (InputStream is = MsgUtil.class.getResourceAsStream("/segments.txt")) {
+			segments.load(is);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
 	
 	private MsgUtil () {
 		//
@@ -39,12 +57,12 @@ public class MsgUtil {
 		return versions;
 	}
 	
-	public static Message send (Message msg, String host, int port) throws Exception {
-		final HapiContext context = new DefaultHapiContext();
-		 Connection connection = context.newClient(host, port, false);
-		 Initiator initiator = connection.getInitiator();
-		 Message response = initiator.sendAndReceive(msg);
-		 return response;
+	public static Message send (Message msg, String version, String host, int port) throws Exception {
+		DefaultHapiContext context = getContext(version);
+		Connection connection = context.newClient(host, port, false);
+		Initiator initiator = connection.getInitiator();
+		Message response = initiator.sendAndReceive(msg);
+		return response;
 	}
 	
 	public static boolean equals (Message msg1, Message msg2) throws Exception {
@@ -221,7 +239,9 @@ public class MsgUtil {
 		Message msg = segment.getMessage();
 		
 		StringBuilder sb = new StringBuilder();
-		sb.append("Message " + msg.getName() + ", segment " + segment.getName());
+		String msgType = msg.getName().substring(0, 3);
+		sb.append(msg.getName() + " " + messages.getProperty(msgType, "unknown") + ", ");
+		sb.append("segment " + segment.getName() + " " + segments.getProperty(segment.getName(), "unknown"));
 		
 		Class<?>[] type = new Class[] { segment.getClass() };
 		
@@ -273,10 +293,6 @@ public class MsgUtil {
 							rt = rt.getComponentType();
 						}
 						String name = mat.group(2) + " [" + rt.getSimpleName() + "]";
-//						if (!AbstractType.class.isAssignableFrom(type)) {
-//							System.out.println("name " + name + " is not abstract type");
-//							type = null;
-//						}
 						if (rt != null && AbstractPrimitive.class.isAssignableFrom(rt)) {
 							System.out.println("name " + name + " is abstract primitive");
 							// can't go deeper
@@ -409,5 +425,6 @@ public class MsgUtil {
 		StringMessageVisitor mv = new StringMessageVisitor();
 		MessageVisitors.visit(msg, mv);
 		return mv.toString();
-	}	
+	}
+	
 }

@@ -223,7 +223,7 @@ public class EditorJFrame extends JFrame {
 				if (hostDialog.isOk()) {
 					host = hostDialog.getHost();
 					port = hostDialog.getPort();
-					Message response = MsgUtil.send(info.msg, host, port);
+					Message response = MsgUtil.send(info.msg, messageVersion, host, port);
 					String text = response.encode().replace("\r", "\n");
 					TextJDialog textDialog = new TextJDialog(this, "Response", editorFont, text);
 					textDialog.setVisible(true);
