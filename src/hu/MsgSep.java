@@ -11,13 +11,13 @@ public class MsgSep {
 	public final char component;
 	public final char subcomponent;
 	
-	public MsgSep (String msgCr) {
+	public MsgSep (String msg) {
 		// MSH|^~\&
-		if (msgCr.startsWith("MSH") && msgCr.length() >= 8) {
-			field = msgCr.charAt(3);
-			component = msgCr.charAt(4);
-			repetition = msgCr.charAt(5);
-			subcomponent = msgCr.charAt(7);
+		if (msg.startsWith("MSH") && msg.length() >= 8) {
+			field = msg.charAt(3);
+			component = msg.charAt(4);
+			repetition = msg.charAt(5);
+			subcomponent = msg.charAt(7);
 		} else {
 			// guess
 			field = '|';

@@ -6,6 +6,10 @@ import java.io.File;
 import java.util.List;
 
 final class FileDropTarget extends DropTargetAdapter {
+	private final EditorJFrame frame;
+	public FileDropTarget (EditorJFrame frame) {
+		this.frame = frame;
+	}
 	@Override
 	public synchronized void drop (DropTargetDropEvent dtde) {
 		System.out.println("drop " + dtde);
@@ -16,7 +20,7 @@ final class FileDropTarget extends DropTargetAdapter {
 			System.out.println("files=" + l);
 			for (Object o : l) {
 				if (o instanceof File) {
-					EditorJFrame.getInstance().addFileEditor((File) o);
+					frame.addFileEditor((File) o);
 				}
 			}
 		} catch (Exception e) {

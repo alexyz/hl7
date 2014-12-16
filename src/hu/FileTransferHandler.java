@@ -11,6 +11,11 @@ import javax.swing.TransferHandler;
  * don't add this to text areas because it breaks cut and paste
  */
 public class FileTransferHandler extends TransferHandler {
+	private EditorJFrame frame;
+
+	public FileTransferHandler (EditorJFrame frame) {
+		this.frame = frame;
+	}
 	@Override
 	public boolean canImport (TransferSupport support) {
 		return true;
@@ -25,7 +30,7 @@ public class FileTransferHandler extends TransferHandler {
 			System.out.println("files=" + l);
 			for (Object o : l) {
 				if (o instanceof File) {
-					EditorJFrame.getInstance().addFileEditor((File) o);
+					frame.addFileEditor((File) o);
 				}
 			}
 		} catch (Exception e) {

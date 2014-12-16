@@ -10,13 +10,12 @@ import java.awt.datatransfer.*;
 import java.awt.event.*;
 import java.io.File;
 import java.util.*;
+import java.util.regex.Pattern;
 
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.*;
 import javax.swing.text.*;
-
-import ca.uhn.hl7v2.model.MessageVisitors;
 
 public class EditorJPanel extends JPanel {
 	
@@ -402,7 +401,24 @@ public class EditorJPanel extends JPanel {
 	}
 
 	public MsgInfo getMessageInfo() throws Exception {
-		return MsgUtil.getInfo(msgArea.getText().replace("\n", "\r"), msgVersion);
+		// guess where the segment separators should be
+		String text = msgArea.getText();
+		MsgSep sep = new MsgSep(text);
+		Pattern segPat = Pattern.compile("[A-Z0-9]{3}" + Pattern.quote(String.valueOf(sep.field)));
+		StringBuilder sb = new StringBuilder(text);
+		int i = 0;
+		while ((i = sb.indexOf("\n", i + 1)) > 0) {
+			if (i < sb.length() - 4) {
+				String seg = sb.substring(i + 1, i + 5);
+				if (segPat.matcher(seg).matches()) {
+					sb.replace(i, i + 1, "\r");
+				}
+			} else {
+				sb.replace(i, i + 1, "\r");
+			}
+		}
+		//System.out.println(sb.toString().replace("\n", "[LF]\n").replace("\r", "[CR]\n"));
+		return MsgUtil.getInfo(sb.toString(), msgVersion);
 	}
 
 }

@@ -293,9 +293,6 @@ public class MsgUtil {
 	
 	/** get the segment, field etc for the character index in the message */
 	public static MsgPos getPosition (final String msgstrCr, final MsgSep sep, final int index) {
-		if (msgstrCr.contains("\n")) {
-			throw new RuntimeException("getPosition requires msgCr");
-		}
 		// start field at 1 for MSH, 0 for others
 		int s = 1, f = 1, fr = 0, c = 1, sc = 1;
 		for (int i = 0; i < index; i++) {
@@ -329,10 +326,6 @@ public class MsgUtil {
 	/** get the character indexes (start and end) of the given logical position */
 	public static int[] getIndexes (final String msgCr, final MsgSep sep, final MsgPos pos) {
 		System.out.println("get indexes: " + msgCr.length() + ", " + pos);
-		
-		if (msgCr.contains("\n")) {
-			throw new RuntimeException("getIndex requires msgCr");
-		}
 		
 		final int[] indexes = new int[2];
 		

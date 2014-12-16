@@ -16,15 +16,9 @@ import ca.uhn.hl7v2.model.Message;
 /** main class and top level frame */
 public class EditorJFrame extends JFrame {
 	
-	
-	private static final EditorJFrame frame = new EditorJFrame();
-	
-	public static EditorJFrame getInstance() {
-		return frame;
-	}
-	
 	public static void main (String[] args) {
 		System.out.println("user dir " + System.getProperty("user.dir"));
+		EditorJFrame frame = new EditorJFrame();
 		frame.setVisible(true);
 		if (args.length == 0) {
 			frame.addEditor();
@@ -48,7 +42,7 @@ public class EditorJFrame extends JFrame {
 		super("HAPI HL7|^~\\&!");
 		setDefaultCloseOperation(EXIT_ON_CLOSE);
 		setJMenuBar(createMenu());
-		setTransferHandler(new FileTransferHandler());
+		setTransferHandler(new FileTransferHandler(this));
 		
 		tabs.addMouseListener(new MouseAdapter() {
 			@Override
@@ -71,7 +65,7 @@ public class EditorJFrame extends JFrame {
 				}
 			}
 		});
-		tabs.setTransferHandler(new FileTransferHandler());
+		tabs.setTransferHandler(new FileTransferHandler(this));
 		
 		setContentPane(tabs);
 		setPreferredSize(new Dimension(800, 600));
@@ -256,7 +250,7 @@ public class EditorJFrame extends JFrame {
 				m.put("messageStr", info.msgCr);
 				m.put("util", new ScriptUtils(info.msg));
 				JSJDialog d = new JSJDialog(this, "Apply JavaScript", editorFont, m, js);
-				d.setLocationRelativeTo(frame);
+				d.setLocationRelativeTo(this);
 				d.setVisible(true);
 				js = d.getInputText();
 				if (!MsgUtil.equals(info.msg, info2.msg)) {
@@ -354,7 +348,7 @@ public class EditorJFrame extends JFrame {
 	
 	private void addEditor (String name, EditorJPanel ep) {
 		ep.setEditorFont(editorFont);
-		ep.setTransferHandler(new FileTransferHandler());
+		ep.setTransferHandler(new FileTransferHandler(this));
 		tabs.addTab(name, ep);
 		tabs.setSelectedComponent(ep);
 	}
