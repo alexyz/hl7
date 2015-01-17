@@ -7,6 +7,7 @@ import java.awt.Point;
 import java.awt.event.*;
 import java.io.File;
 import java.util.*;
+import java.util.prefs.Preferences;
 
 import javax.swing.*;
 
@@ -32,7 +33,7 @@ public class EditorJFrame extends JFrame {
 	private final JTabbedPane tabs = new JTabbedPane();
 	
 	private File dir = new File(System.getProperty("user.dir"));
-	private Font editorFont = new Font("Monospaced", 0, 14);
+	private Font editorFont;
 	private String messageVersion = MsgUtil.HIGHEST_VERSION;
 	private String js = "util.replace('A', 'B');";
 	private String host = "localhost";
@@ -43,7 +44,34 @@ public class EditorJFrame extends JFrame {
 		setDefaultCloseOperation(EXIT_ON_CLOSE);
 		setJMenuBar(createMenu());
 		setTransferHandler(new FileTransferHandler(this));
-		
+		initComps();
+		loadPrefs();
+		setContentPane(tabs);
+		setPreferredSize(new Dimension(800, 600));
+		pack();
+	}
+	
+	private void loadPrefs() {
+		Preferences prefs = Preferences.userNodeForPackage(getClass());
+		String fontName = prefs.get("font", "Monospaced");
+		int fontSize = prefs.getInt("fontsize", 14);
+		int fontStyle = prefs.getInt("fontstyle", 0);
+		editorFont = new Font(fontName, fontStyle, fontSize);
+	}
+	
+	private void savePrefs() {
+		Preferences prefs = Preferences.userNodeForPackage(getClass());
+		prefs.put("font", editorFont.getFontName());
+		prefs.putInt("fontsize", editorFont.getSize());
+		prefs.putInt("fontstyle", editorFont.getStyle());
+		try {
+			prefs.flush();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+	private void initComps () {
 		tabs.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseClicked (MouseEvent e) {
@@ -66,10 +94,6 @@ public class EditorJFrame extends JFrame {
 			}
 		});
 		tabs.setTransferHandler(new FileTransferHandler(this));
-		
-		setContentPane(tabs);
-		setPreferredSize(new Dimension(800, 600));
-		pack();
 	}
 	
 	private JMenuBar createMenu () {
@@ -85,6 +109,7 @@ public class EditorJFrame extends JFrame {
 					Font f = dialog.getSelectedFont();
 					if (f != null) {
 						setEditorFonts(f);
+						savePrefs();
 					}
 				}
 			});
