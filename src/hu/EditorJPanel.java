@@ -21,6 +21,7 @@ import org.apache.commons.lang3.StringEscapeUtils;
 
 public class EditorJPanel extends JPanel {
 	
+	private static final String DESC_SEP = "\u25aa";
 	private static final Color ERROR_COL = new Color(255, 192, 192);
 	private static final Color SEGMENT_COL = new Color(192, 255, 192);
 	private static final Color VALUE_COL = new Color(255, 255, 192);
@@ -254,7 +255,7 @@ public class EditorJPanel extends JPanel {
 			}
 			
 			// populate the fields
-			MsgPath terserPath = MsgUtil.getTerserPath(info.msg, info.terser, pos);
+			MsgPath terserPath = MsgUtil.getTerserPath(info.msg, info.terser, pos, DESC_SEP);
 			if (terserPath != null) {
 				if (!pathField.getText().equals(terserPath.path)) {
 					pathField.setText(terserPath.path);
@@ -292,7 +293,7 @@ public class EditorJPanel extends JPanel {
 			valueField.setText(StringEscapeUtils.escapeJava(value));
 			
 			MsgPos pos = MsgUtil.getPosition(info.terser, path);
-			String desc = MsgUtil.getDescription(info.msg, pos);
+			String desc = MsgUtil.getDescription(info.msg, pos, DESC_SEP);
 			descriptionArea.setText(desc);
 			
 		} catch (Exception e) {

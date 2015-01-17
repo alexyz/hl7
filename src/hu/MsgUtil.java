@@ -130,7 +130,7 @@ public class MsgUtil {
 	}
 	
 	/** get the terser path for the message position */
-	public static MsgPath getTerserPath (final Message msg, final Terser t, final MsgPos pos) throws Exception {
+	public static MsgPath getTerserPath (final Message msg, final Terser t, final MsgPos pos, String descSep) throws Exception {
 		MsgSeg sl = getSegment(msg, pos.segOrd);
 		StringBuilder pathSb = new StringBuilder();
 		String desc = "";
@@ -152,7 +152,7 @@ public class MsgUtil {
 				}
 			}
 			path = pathSb.toString();
-			desc = getDescription(sl.segment, pos);
+			desc = getDescription(sl.segment, pos, descSep);
 			
 			if (pos.fieldOrd > 0) {
 				try {
@@ -228,51 +228,62 @@ public class MsgUtil {
 	}
 	
 	/** get description of hl7 field, component and subcomponent */
-	public static String getDescription (final Message msg, final MsgPos pos) {
+	public static String getDescription (final Message msg, final MsgPos pos, final String descSep) {
 		MsgSeg sl = getSegment(msg, pos.segOrd);
-		return getDescription(sl.segment, pos);
+		return getDescription(sl.segment, pos, descSep);
 	}
 	
 	/** get description of hl7 field, component and subcomponent */
-	public static String getDescription (final Segment segment, final MsgPos pos) {
+	public static String getDescription (final Segment segment, final MsgPos pos, final String descSep) {
 		System.out.println("get description " + pos);
-		Message msg = segment.getMessage();
+		final Message msg = segment.getMessage();
+		final String msgType = msg.getName().substring(0, 3);
+		final String msgTypeDesc = messages.getProperty(msgType, "unknown");
+		final String segDesc = segments.getProperty(segment.getName(), "unknown");
 		
-		StringBuilder sb = new StringBuilder();
-		String msgType = msg.getName().substring(0, 3);
-		sb.append("Message " + msg.getName() + ": " + messages.getProperty(msgType, "unknown") + "; ");
-		sb.append("segment " + segment.getName() + ": " + segments.getProperty(segment.getName(), "unknown"));
+		final StringBuilder sb = new StringBuilder();
+		sb.append("Message " + msg.getName() + ": " + msgTypeDesc);
+		sb.append(" " + descSep + " ");
+		sb.append("Segment " + segment.getName() + ": " + segDesc);
 		
 		Class<?>[] type = new Class[] { segment.getClass() };
 		
 		String field = getDescription2(type, pos.fieldOrd);
 		if (field != null) {
-			sb.append("; field " + pos.fieldOrd + ": " + field);
+			sb.append(" " + descSep + " ");
+			sb.append("Field " + pos.fieldOrd + ": " + field);
 			if (type[0] != null) {
 				String comp = getDescription2(type, pos.compOrd);
 				if (comp != null) {
-					sb.append("; component " + pos.compOrd + ": " + comp);
+					sb.append(" " + descSep + " ");
+					sb.append("Component " + pos.compOrd + ": " + comp);
 					if (type[0] != null) {
 						String subcomp = getDescription2(type, pos.subCompOrd);
+						sb.append(" " + descSep + " ");
 						if (subcomp != null) {
-							sb.append("; subcomponent " + pos.subCompOrd + ": " + subcomp);
+							sb.append("Subcomponent " + pos.subCompOrd + ": " + subcomp);
 						} else {
-							sb.append("; unknown subcomponent " + pos.subCompOrd);
+							sb.append("Unknown subcomponent " + pos.subCompOrd);
 						}
 					} else if (pos.subCompOrd > 1) {
-						sb.append("; unknown subcomponent " + pos.subCompOrd);
+						sb.append(" " + descSep + " ");
+						sb.append("Unknown subcomponent " + pos.subCompOrd);
 					}
 				} else {
-					sb.append("; unknown component " + pos.compOrd);
+					sb.append(" " + descSep + " ");
+					sb.append("Unknown component " + pos.compOrd);
 				}
 			} else if (pos.compOrd > 1) {
-				sb.append("; unknown component " + pos.compOrd);
+				sb.append(" " + descSep + " ");
+				sb.append("Unknown component " + pos.compOrd);
 				
 			} else if (pos.subCompOrd > 1) {
-				sb.append("; unknown subcomponent " + pos.subCompOrd);
+				sb.append(" " + descSep + " ");
+				sb.append("Unknown subcomponent " + pos.subCompOrd);
 			}
 		} else {
-			sb.append("; unknown field " + pos.fieldOrd);
+			sb.append(" " + descSep + " ");
+			sb.append("Unknown field " + pos.fieldOrd);
 		}
 		return sb.toString();
 	}
