@@ -1,4 +1,4 @@
-package hu;
+package hu.mv;
 
 import java.util.*;
 
@@ -13,7 +13,7 @@ public class MessageVisitorAdapter implements MessageVisitor {
 	 */
 	protected boolean continue_ = true;
 	
-	private final Map<String,Integer> fieldReps = new TreeMap<>();
+	private final Map<String, Integer> fieldReps = new TreeMap<>();
 	
 	@Override
 	public boolean start (Message message) throws HL7Exception {
@@ -41,8 +41,7 @@ public class MessageVisitorAdapter implements MessageVisitor {
 		Group parent = segment.getParent();
 		if (parent instanceof AbstractGroup) {
 			AbstractGroup ag = (AbstractGroup) parent;
-			loop: 
-			for (String name : ag.getNames()) {
+			loop: for (String name : ag.getNames()) {
 				for (Structure st : ag.getAll(name)) {
 					if (st == segment) {
 						// did hapi get the path wrong?
@@ -69,7 +68,7 @@ public class MessageVisitorAdapter implements MessageVisitor {
 	@Override
 	public final boolean start (Field field, Location location) throws HL7Exception {
 		fieldReps.clear();
-		return start2 (field, location);
+		return start2(field, location);
 	}
 	
 	public boolean start2 (Field field, Location location) throws HL7Exception {
@@ -84,7 +83,7 @@ public class MessageVisitorAdapter implements MessageVisitor {
 	@Override
 	public final boolean start (Composite type, Location location) throws HL7Exception {
 		updateFieldRepetition(location);
-		return start2 (type, location);
+		return start2(type, location);
 	}
 	
 	public boolean start2 (Composite type, Location location) throws HL7Exception {
@@ -99,15 +98,15 @@ public class MessageVisitorAdapter implements MessageVisitor {
 	@Override
 	public final boolean visit (Primitive type, Location location) throws HL7Exception {
 		updateFieldRepetition(location);
-		return visit2 (type, location);
+		return visit2(type, location);
 	}
-
+	
 	/** visit with fixed field repetition count */
 	public boolean visit2 (Primitive type, Location location) throws HL7Exception {
 		return continue_;
 	}
-
-	/** fix the repetition count being 0 */ 
+	
+	/** fix the repetition count being 0 */
 	private void updateFieldRepetition (Location location) {
 		String path = location.toString();
 		Integer i = fieldReps.get(path);

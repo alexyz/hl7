@@ -1,5 +1,7 @@
 package hu;
 
+import hu.mv.*;
+
 import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -28,6 +30,7 @@ public class MsgUtil {
 	
 	private static final Properties messages = new Properties();
 	private static final Properties segments = new Properties();
+	private static final Map<String, DefaultHapiContext> contexts = new TreeMap<>();
 	
 	static {
 		try (InputStream is = MsgUtil.class.getResourceAsStream("/messages.txt")) {
@@ -46,7 +49,7 @@ public class MsgUtil {
 		//
 	}
 	
-	public static List<String> getVersions() {
+	public static List<String> getVersions () {
 		List<String> versions = new ArrayList<>();
 		versions.add(MsgUtil.HIGHEST_VERSION);
 		versions.add(MsgUtil.DEFAULT_VERSION);
@@ -69,9 +72,7 @@ public class MsgUtil {
 		return msg1.encode().equals(msg2.encode());
 	}
 	
-	private static final Map<String,DefaultHapiContext> contexts = new TreeMap<>();
-	
-	public static DefaultHapiContext getContext(String version) {
+	public static DefaultHapiContext getContext (String version) {
 		DefaultHapiContext c = contexts.get(version);
 		if (c == null) {
 			switch (version) {
@@ -182,6 +183,7 @@ public class MsgUtil {
 		
 		final MessageVisitorAdapter mv = new MessageVisitorAdapter() {
 			int s = 1;
+			
 			@Override
 			public boolean start2 (Segment segment2, Location location) throws HL7Exception {
 				if (segment == segment2) {
@@ -209,6 +211,7 @@ public class MsgUtil {
 		final MsgSeg[] sl = new MsgSeg[1];
 		MessageVisitorAdapter mv = new MessageVisitorAdapter() {
 			int s = 1;
+			
 			@Override
 			public boolean start2 (Segment segment, Location location) throws HL7Exception {
 				if (s == segmentOrd) {
@@ -360,7 +363,8 @@ public class MsgUtil {
 		final int[] indexes = new int[2];
 		
 		// field and repetition are prefixed (with ~ and |) so start at 0
-		// segment, component and subcomponent may not be prefixed (with CR, ^ or &) so start at 1
+		// segment, component and subcomponent may not be prefixed (with CR, ^
+		// or &) so start at 1
 		int s = 1, f = 0, r = 0, c = 1, sc = 1, len = 0;
 		
 		boolean found = false;
@@ -368,10 +372,11 @@ public class MsgUtil {
 		for (int i = 0; i < msgCr.length(); i++) {
 			char ch = msgCr.charAt(i);
 			
-			//System.out.println(String.format("getIndexes: ch %x s %d f %d fr %d c %d sc %d len %d", (int) ch, s, f, r, c, sc, len));
+			// System.out.println(String.format("getIndexes: ch %x s %d f %d fr %d c %d sc %d len %d",
+			// (int) ch, s, f, r, c, sc, len));
 			
 			if (s == pos.segOrd && f == pos.fieldOrd && r == pos.fieldRep && c == pos.compOrd && sc == pos.subCompOrd) {
-				//System.out.println("matched");
+				// System.out.println("matched");
 				if (!found) {
 					indexes[0] = i;
 					indexes[1] = i;

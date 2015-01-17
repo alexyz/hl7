@@ -1,5 +1,7 @@
 package hu;
 
+import hu.mv.ValidationMessage;
+
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
@@ -18,6 +20,7 @@ import javax.swing.event.*;
 import javax.swing.text.*;
 
 import org.apache.commons.lang3.StringEscapeUtils;
+import org.apache.commons.lang3.text.WordUtils;
 
 public class EditorJPanel extends JPanel {
 	
@@ -25,8 +28,8 @@ public class EditorJPanel extends JPanel {
 	private static final Color ERROR_COL = new Color(255, 192, 192);
 	private static final Color SEGMENT_COL = new Color(192, 255, 192);
 	private static final Color VALUE_COL = new Color(255, 255, 192);
-
-	private static Color getColor(ValidationMessage.Type type) {
+	
+	private static Color getColor (ValidationMessage.Type type) {
 		switch (type) {
 			case ERROR:
 				return ERROR_COL;
@@ -52,12 +55,13 @@ public class EditorJPanel extends JPanel {
 	public EditorJPanel () {
 		super(new BorderLayout());
 		
-		((AbstractDocument)msgArea.getDocument()).setDocumentFilter(new DocumentFilter() {
+		((AbstractDocument) msgArea.getDocument()).setDocumentFilter(new DocumentFilter() {
 			@Override
 			public void insertString (FilterBypass fb, int offset, String string, AttributeSet attr) throws BadLocationException {
 				System.out.println("document filter insert string");
 				super.insertString(fb, offset, string.replace(MsgSep.SEGMENT, '\n'), attr);
 			}
+			
 			@Override
 			public void replace (FilterBypass fb, int offset, int length, String text, AttributeSet attrs) throws BadLocationException {
 				System.out.println("document filter replace");
@@ -73,7 +77,7 @@ public class EditorJPanel extends JPanel {
 			public void caretUpdate (CaretEvent ce) {
 				// avoid error when setting text before version
 				if (EditorJPanel.this.isShowing()) {
-					//update(Math.min(ce.getMark(), ce.getDot()));
+					// update(Math.min(ce.getMark(), ce.getDot()));
 					update();
 				}
 			}
@@ -227,7 +231,7 @@ public class EditorJPanel extends JPanel {
 			// do error highlighting
 			
 			String selectedValue = null;
-			if (selStart >0 && selEnd > selStart) {
+			if (selStart > 0 && selEnd > selStart) {
 				selectedValue = msgLf.substring(selStart, selEnd);
 			}
 			
@@ -399,11 +403,11 @@ public class EditorJPanel extends JPanel {
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
-			JOptionPane.showMessageDialog(SwingUtilities.getWindowAncestor(this), e.toString(), "Paste", JOptionPane.ERROR_MESSAGE);
+			JOptionPane.showMessageDialog(SwingUtilities.getWindowAncestor(this), WordUtils.wrap(e.toString(), 80), "Paste", JOptionPane.ERROR_MESSAGE);
 		}
 	}
-
-	public MsgInfo getMessageInfo() throws Exception {
+	
+	public MsgInfo getMessageInfo () throws Exception {
 		// guess where the segment separators should be
 		String text = msgArea.getText();
 		MsgSep sep = new MsgSep(text);
@@ -420,8 +424,7 @@ public class EditorJPanel extends JPanel {
 				sb.replace(i, i + 1, "\r");
 			}
 		}
-		//System.out.println(sb.toString().replace("\n", "[LF]\n").replace("\r", "[CR]\n"));
 		return MsgUtil.getInfo(sb.toString(), msgVersion);
 	}
-
+	
 }

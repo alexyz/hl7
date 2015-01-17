@@ -1,19 +1,25 @@
 package hu;
 
+import hu.mv.*;
+
 import ca.uhn.hl7v2.*;
 import ca.uhn.hl7v2.model.*;
 
 public class ScriptUtils {
 	private final Message msg;
+	
 	public ScriptUtils (Message msg) {
 		this.msg = msg;
 	}
+	
 	public int replace (final String s, final String t) {
 		return replace(s, t, false);
 	}
+	
 	public int replaceAll (final String s, final String t) {
 		return replace(s, t, true);
 	}
+	
 	public int replace (final String s, final String t, final boolean regex) {
 		final int[] a = new int[1];
 		MessageVisitor mv = new MessageVisitorAdapter() {

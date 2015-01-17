@@ -1,4 +1,6 @@
-package hu;
+package hu.mv;
+
+import hu.*;
 
 import java.util.*;
 

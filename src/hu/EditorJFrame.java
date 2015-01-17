@@ -11,6 +11,8 @@ import java.util.prefs.Preferences;
 
 import javax.swing.*;
 
+import org.apache.commons.lang3.text.WordUtils;
+
 import jsui.JSJDialog;
 import ca.uhn.hl7v2.model.Message;
 
@@ -38,6 +40,7 @@ public class EditorJFrame extends JFrame {
 	private String js = "util.replace('A', 'B');";
 	private String host = "localhost";
 	private int port = 1000;
+	private String findText = "";
 	
 	public EditorJFrame () {
 		super("HAPI HL7|^~\\&!");
@@ -51,7 +54,7 @@ public class EditorJFrame extends JFrame {
 		pack();
 	}
 	
-	private void loadPrefs() {
+	private void loadPrefs () {
 		Preferences prefs = Preferences.userNodeForPackage(getClass());
 		String fontName = prefs.get("font", "Monospaced");
 		int fontSize = prefs.getInt("fontsize", 14);
@@ -59,7 +62,7 @@ public class EditorJFrame extends JFrame {
 		editorFont = new Font(fontName, fontStyle, fontSize);
 	}
 	
-	private void savePrefs() {
+	private void savePrefs () {
 		Preferences prefs = Preferences.userNodeForPackage(getClass());
 		prefs.put("font", editorFont.getFontName());
 		prefs.putInt("fontsize", editorFont.getSize());
@@ -70,7 +73,7 @@ public class EditorJFrame extends JFrame {
 			e.printStackTrace();
 		}
 	}
-
+	
 	private void initComps () {
 		tabs.addMouseListener(new MouseAdapter() {
 			@Override
@@ -80,12 +83,14 @@ public class EditorJFrame extends JFrame {
 					addEditor();
 				}
 			}
+			
 			@Override
 			public void mousePressed (MouseEvent e) {
 				if (e.isPopupTrigger()) {
 					popup(e.getPoint());
 				}
 			}
+			
 			@Override
 			public void mouseReleased (MouseEvent e) {
 				if (e.isPopupTrigger()) {
@@ -187,6 +192,16 @@ public class EditorJFrame extends JFrame {
 		JMenu messageMenu = new JMenu("Message");
 		{
 			{
+				JMenuItem item = new JMenuItem("Find...");
+				item.addActionListener(new ActionListener() {
+					@Override
+					public void actionPerformed (ActionEvent e) {
+						find();
+					}
+				});
+				messageMenu.add(item);
+			}
+			{
 				JMenuItem item = new JMenuItem("Print Structure...");
 				item.addActionListener(new ActionListener() {
 					@Override
@@ -236,7 +251,26 @@ public class EditorJFrame extends JFrame {
 		return menuBar;
 	}
 	
-	private void send() {
+	private void find () {
+		Component comp = tabs.getSelectedComponent();
+		if (comp instanceof EditorJPanel) {
+			EditorJPanel ep = (EditorJPanel) comp;
+			try {
+				MsgInfo info = ep.getMessageInfo();
+				FindJDialog dialog = new FindJDialog(this, info.msg, findText);
+				dialog.setLocationRelativeTo(this);
+				dialog.setModal(true);
+				dialog.setVisible(true);
+				findText = dialog.getFindText();
+				
+			} catch (Exception e) {
+				e.printStackTrace();
+				JOptionPane.showMessageDialog(this, WordUtils.wrap(e.toString(), 80), "Send", JOptionPane.ERROR_MESSAGE);
+			}
+		}
+	}
+	
+	private void send () {
 		System.out.println("send");
 		Component comp = tabs.getSelectedComponent();
 		if (comp instanceof EditorJPanel) {
@@ -256,12 +290,12 @@ public class EditorJFrame extends JFrame {
 				
 			} catch (Exception e) {
 				e.printStackTrace();
-				JOptionPane.showMessageDialog(this, e.toString(), "Send", JOptionPane.ERROR_MESSAGE);
+				JOptionPane.showMessageDialog(this, WordUtils.wrap(e.toString(), 80), "Send", JOptionPane.ERROR_MESSAGE);
 			}
 		}
 	}
 	
-	private void applyJs() {
+	private void applyJs () {
 		System.out.println("apply js");
 		Component comp = tabs.getSelectedComponent();
 		if (comp instanceof EditorJPanel) {
@@ -269,7 +303,7 @@ public class EditorJFrame extends JFrame {
 			try {
 				MsgInfo info = ep.getMessageInfo();
 				MsgInfo info2 = ep.getMessageInfo();
-				Map<String,Object> m = new TreeMap<>();
+				Map<String, Object> m = new TreeMap<>();
 				m.put("message", info.msg);
 				m.put("terser", info.terser);
 				m.put("messageStr", info.msgCr);
@@ -287,12 +321,12 @@ public class EditorJFrame extends JFrame {
 				
 			} catch (Exception e) {
 				e.printStackTrace();
-				JOptionPane.showMessageDialog(this, e.toString(), "Apply", JOptionPane.ERROR_MESSAGE);
+				JOptionPane.showMessageDialog(this, WordUtils.wrap(e.toString(), 80), "Apply", JOptionPane.ERROR_MESSAGE);
 			}
 		}
 	}
 	
-	private void printStructure() {
+	private void printStructure () {
 		System.out.println("print structure");
 		Component comp = tabs.getSelectedComponent();
 		if (comp instanceof EditorJPanel) {
@@ -305,12 +339,12 @@ public class EditorJFrame extends JFrame {
 				
 			} catch (Exception e) {
 				e.printStackTrace();
-				JOptionPane.showMessageDialog(this, e.toString(), "Structure", JOptionPane.ERROR_MESSAGE);
+				JOptionPane.showMessageDialog(this, WordUtils.wrap(e.toString(), 80), "Structure", JOptionPane.ERROR_MESSAGE);
 			}
 		}
 	}
 	
-	private void printLocations() {
+	private void printLocations () {
 		System.out.println("print locations");
 		Component comp = tabs.getSelectedComponent();
 		if (comp instanceof EditorJPanel) {
@@ -367,7 +401,7 @@ public class EditorJFrame extends JFrame {
 			
 		} catch (Exception e) {
 			e.printStackTrace();
-			JOptionPane.showMessageDialog(this, e.toString(), "Open", JOptionPane.ERROR_MESSAGE);
+			JOptionPane.showMessageDialog(this, WordUtils.wrap(e.toString(), 80), "Open", JOptionPane.ERROR_MESSAGE);
 		}
 	}
 	
@@ -402,7 +436,7 @@ public class EditorJFrame extends JFrame {
 						
 					} catch (Exception e) {
 						e.printStackTrace();
-						JOptionPane.showMessageDialog(this, e.toString(), "Re-open", JOptionPane.ERROR_MESSAGE);
+						JOptionPane.showMessageDialog(this, WordUtils.wrap(e.toString(), 80), "Re-open", JOptionPane.ERROR_MESSAGE);
 					}
 				}
 			}
@@ -430,7 +464,7 @@ public class EditorJFrame extends JFrame {
 					
 				} catch (Exception e) {
 					e.printStackTrace();
-					JOptionPane.showMessageDialog(this, e.toString(), "Save", JOptionPane.ERROR_MESSAGE);
+					JOptionPane.showMessageDialog(this, WordUtils.wrap(e.toString(), 80), "Save", JOptionPane.ERROR_MESSAGE);
 				}
 			}
 		}
@@ -441,7 +475,8 @@ public class EditorJFrame extends JFrame {
 		EditorJPanel ep = (EditorJPanel) tabs.getSelectedComponent();
 		if (ep != null) {
 			String message = ep.getMessage();
-			if (message == null || message.length() == 0 || JOptionPane.showConfirmDialog(this, "Close editor?", "Close", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
+			if (message == null || message.length() == 0
+					|| JOptionPane.showConfirmDialog(this, "Close editor?", "Close", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
 				tabs.remove(ep);
 			}
 		}
@@ -457,7 +492,7 @@ public class EditorJFrame extends JFrame {
 		}
 	}
 	
-	private void setMessageVersions(String version) {
+	private void setMessageVersions (String version) {
 		System.out.println("set editor version " + version);
 		messageVersion = version;
 		for (Component comp : tabs.getComponents()) {

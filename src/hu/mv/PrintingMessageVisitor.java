@@ -1,46 +1,45 @@
-package hu;
+package hu.mv;
 
 import ca.uhn.hl7v2.*;
 import ca.uhn.hl7v2.model.*;
 
 /** printing visitor */
-public class StringMessageVisitor extends MessageVisitorAdapter {
+public class PrintingMessageVisitor extends MessageVisitorAdapter {
 	
-	private final StringBuilder sb = new StringBuilder();
+	@Override
+	public boolean start (Message message) throws HL7Exception {
+		System.out.println("start message");
+		return true;
+	}
 	
 	@Override
 	public boolean start (Group group, Location location) throws HL7Exception {
-		sb.append(location + " is group " + group.getName() + "\n");
+		System.out.println("  " + location + " group " + group);
 		return true;
 	}
 	
 	@Override
 	public boolean start2 (Segment segment, Location location) throws HL7Exception {
-		sb.append(location + " is segment " + segment.getName() + "\n");
+		System.out.println("    " + location + " segment " + segment);
 		return true;
 	}
 	
 	@Override
 	public boolean start2 (Field field, Location location) throws HL7Exception {
-		sb.append(location + " is field\n");
+		System.out.println("      " + location + " field " + field);
 		return true;
 	}
 	
 	@Override
 	public boolean start2 (Composite type, Location location) throws HL7Exception {
-		sb.append(location + " is composite type " + type.getName() + "\n");
+		System.out.println("        " + location + " composite " + type);
 		return true;
 	}
 	
 	@Override
 	public boolean visit2 (Primitive type, Location location) throws HL7Exception {
-		sb.append(location + " is primitive type " + type.getName() + " value " + type + "\n");
+		System.out.println("          " + location + " primitive " + type);
 		return true;
-	}
-	
-	@Override
-	public String toString () {
-		return sb.toString();
 	}
 	
 }
