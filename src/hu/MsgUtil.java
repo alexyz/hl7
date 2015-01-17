@@ -242,49 +242,52 @@ public class MsgUtil {
 		final String segDesc = segments.getProperty(segment.getName(), "unknown");
 		
 		final StringBuilder sb = new StringBuilder();
-		sb.append("Message " + msg.getName() + ": " + msgTypeDesc);
+		sb.append("Message " + msgType + ": " + msgTypeDesc + " [" + msg.getName() + "]");
 		sb.append(" " + descSep + " ");
 		sb.append("Segment " + segment.getName() + ": " + segDesc);
 		
 		Class<?>[] type = new Class[] { segment.getClass() };
 		
-		String field = getDescription2(type, pos.fieldOrd);
-		if (field != null) {
-			sb.append(" " + descSep + " ");
-			sb.append("Field " + pos.fieldOrd + ": " + field);
-			if (type[0] != null) {
-				String comp = getDescription2(type, pos.compOrd);
-				if (comp != null) {
-					sb.append(" " + descSep + " ");
-					sb.append("Component " + pos.compOrd + ": " + comp);
-					if (type[0] != null) {
-						String subcomp = getDescription2(type, pos.subCompOrd);
+		if (pos.fieldOrd > 0) {
+			String field = getDescription2(type, pos.fieldOrd);
+			if (field != null) {
+				sb.append(" " + descSep + " ");
+				sb.append("Field " + pos.fieldOrd + ": " + field);
+				if (type[0] != null) {
+					String comp = getDescription2(type, pos.compOrd);
+					if (comp != null) {
 						sb.append(" " + descSep + " ");
-						if (subcomp != null) {
-							sb.append("Subcomponent " + pos.subCompOrd + ": " + subcomp);
-						} else {
+						sb.append("Component " + pos.compOrd + ": " + comp);
+						if (type[0] != null) {
+							String subcomp = getDescription2(type, pos.subCompOrd);
+							sb.append(" " + descSep + " ");
+							if (subcomp != null) {
+								sb.append("Subcomponent " + pos.subCompOrd + ": " + subcomp);
+							} else {
+								sb.append("Unknown subcomponent " + pos.subCompOrd);
+							}
+						} else if (pos.subCompOrd > 1) {
+							sb.append(" " + descSep + " ");
 							sb.append("Unknown subcomponent " + pos.subCompOrd);
 						}
-					} else if (pos.subCompOrd > 1) {
+					} else {
 						sb.append(" " + descSep + " ");
-						sb.append("Unknown subcomponent " + pos.subCompOrd);
+						sb.append("Unknown component " + pos.compOrd);
 					}
-				} else {
+				} else if (pos.compOrd > 1) {
 					sb.append(" " + descSep + " ");
 					sb.append("Unknown component " + pos.compOrd);
+					
+				} else if (pos.subCompOrd > 1) {
+					sb.append(" " + descSep + " ");
+					sb.append("Unknown subcomponent " + pos.subCompOrd);
 				}
-			} else if (pos.compOrd > 1) {
+			} else {
 				sb.append(" " + descSep + " ");
-				sb.append("Unknown component " + pos.compOrd);
-				
-			} else if (pos.subCompOrd > 1) {
-				sb.append(" " + descSep + " ");
-				sb.append("Unknown subcomponent " + pos.subCompOrd);
+				sb.append("Unknown field " + pos.fieldOrd);
 			}
-		} else {
-			sb.append(" " + descSep + " ");
-			sb.append("Unknown field " + pos.fieldOrd);
 		}
+		
 		return sb.toString();
 	}
 	
