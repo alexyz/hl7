@@ -169,7 +169,7 @@ public class MsgUtil {
 		return new MsgPath(path, value, desc);
 	}
 	
-	/** get position of segment path */
+	/** get position of segment path, never returns null */
 	public static MsgPos getPosition (Terser terser, String path) throws Exception {
 		Segment segment = terser.getSegment(path.substring(0, path.indexOf("-")));
 		int[] i = Terser.getIndices(path);
@@ -178,31 +178,34 @@ public class MsgUtil {
 	}
 	
 	/** get segment ordinal of segment */
-	public static int getSegmentOrdinal (final Message msg, final Segment segment) {
+	public static int getSegmentOrdinal (final Message msg, final Segment findSegment) throws Exception {
+		//System.out.println("get segment ordinal of " + findSegment);
 		final int[] segOrd = new int[1];
 		
 		final MessageVisitorAdapter mv = new MessageVisitorAdapter() {
 			int s = 1;
 			
 			@Override
-			public boolean start2 (Segment segment2, Location location) throws HL7Exception {
-				if (segment == segment2) {
-					segOrd[0] = s;
-					continue_ = false;
-					return false;
+			public boolean start2 (Segment segment, Location location) throws HL7Exception {
+				//System.out.println("segment=" + segment + " s=" + s);
+				if (!segment.isEmpty()) {
+					if (findSegment == segment) {
+						//System.out.println("found");
+						segOrd[0] = s;
+						continue_ = false;
+					}
+					s++;
 				}
-				s++;
 				return continue_;
 			}
 		};
 		
-		try {
-			MessageVisitors.visit(msg, MessageVisitors.visitStructures(mv));
-			
-		} catch (HL7Exception e) {
-			System.out.println("could not get segment name: " + e);
-		}
+		MessageVisitors.visit(msg, MessageVisitors.visitStructures(mv));
 		
+		if (segOrd[0] == 0) {
+			System.out.println("could not get segment ordinal of " + findSegment);
+		}
+			
 		return segOrd[0];
 	}
 	
@@ -356,9 +359,9 @@ public class MsgUtil {
 		return new MsgPos(s, f, fr, c, sc);
 	}
 	
-	/** get the character indexes (start and end) of the given logical position */
+	/** get the character indexes (start and end) of the given logical position, returns null otherwise */
 	public static int[] getIndexes (final String msgCr, final MsgSep sep, final MsgPos pos) {
-		System.out.println("get indexes: " + msgCr.length() + ", " + pos);
+		//System.out.println("get indexes: " + msgCr.length() + ", " + pos);
 		
 		final int[] indexes = new int[2];
 		
@@ -435,7 +438,7 @@ public class MsgUtil {
 			return indexes;
 			
 		} else {
-			System.out.println("could not find pos");
+			System.out.println(String.format("could not find indexes of %s, last pos is s=%d f=%d fr=%d c=%d sc=%d len=%d", pos, s, f, r, c, sc, len));
 			return null;
 		}
 	}

@@ -15,6 +15,4 @@ Screenshots
 Download
 --------
 
-[Runnable jar file](https://dl.dropboxusercontent.com/u/8069847/hl7editor.jar)
-
 [Runnable jar file (HL7 2.6 only)](https://dl.dropboxusercontent.com/u/8069847/hl7editor26only.jar)

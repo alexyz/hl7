@@ -51,10 +51,14 @@ public class EditorJPanel extends JPanel {
 	
 	private File file;
 	private String msgVersion;
+	private String findText = "";
 	
 	public EditorJPanel () {
 		super(new BorderLayout());
-		
+		initComps();
+	}
+
+	private void initComps () {
 		((AbstractDocument) msgArea.getDocument()).setDocumentFilter(new DocumentFilter() {
 			@Override
 			public void insertString (FilterBypass fb, int offset, String string, AttributeSet attr) throws BadLocationException {
@@ -71,6 +75,15 @@ public class EditorJPanel extends JPanel {
 		
 		msgArea.setBorder(new TitledBorder("Message"));
 		msgArea.setLineWrap(true);
+		
+		msgArea.addKeyListener(new KeyAdapter() {
+			@Override
+			public void keyPressed (KeyEvent e) {
+				if ((e.isControlDown() || e.isMetaDown()) && e.getKeyChar() == 'f') {
+					find();
+				}
+			}
+		});
 		
 		msgArea.addCaretListener(new CaretListener() {
 			@Override
@@ -176,13 +189,29 @@ public class EditorJPanel extends JPanel {
 		this.file = file;
 	}
 	
-	/** return message with segments separated with line feeds */
-	public String getMessage () {
-		return msgArea.getText();
+	/** return message with segments separated with carriage returns */
+	public String getMsgCr () {
+		// guess where the segment separators should be
+		String text = msgArea.getText();
+		MsgSep sep = new MsgSep(text);
+		Pattern segPat = Pattern.compile("[A-Z0-9]{3}" + Pattern.quote(String.valueOf(sep.field)));
+		StringBuilder sb = new StringBuilder(text);
+		int i = 0;
+		while ((i = sb.indexOf("\n", i + 1)) > 0) {
+			if (i < sb.length() - 4) {
+				String seg = sb.substring(i + 1, i + 5);
+				if (segPat.matcher(seg).matches()) {
+					sb.replace(i, i + 1, "\r");
+				}
+			} else {
+				sb.replace(i, i + 1, "\r");
+			}
+		}
+		return sb.toString();
 	}
 	
-	public void setMessage (String msgLf) {
-		msgArea.setText(msgLf);
+	public void setMsg (String msg) {
+		msgArea.setText(msg.replace(MsgSep.SEGMENT, '\n'));
 		msgArea.setCaretPosition(0);
 		update();
 	}
@@ -235,14 +264,14 @@ public class EditorJPanel extends JPanel {
 				selectedValue = msgLf.substring(selStart, selEnd);
 			}
 			
-			final MsgInfo info = getMessageInfo();
+			final MsgInfo info = getMsgInfo();
 			final MsgPos pos = MsgUtil.getPosition(info.msgCr, info.sep, caretIndex);
 			final List<ValidationMessage> errors = MsgUtil.getErrors(info.msg, info.msgCr, info.sep, msgVersion, selectedValue);
 			System.out.println("errors: " + errors.size());
 			
 			String currentError = null;
 			for (ValidationMessage ve : errors) {
-				System.out.println("highlight " + ve);
+				//System.out.println("highlight " + ve);
 				if (ve.pos.equals(pos) && ve.type == ValidationMessage.Type.ERROR) {
 					currentError = ve.msg;
 				}
@@ -254,7 +283,7 @@ public class EditorJPanel extends JPanel {
 					}
 					
 				} else {
-					System.out.println("no indexes!");
+					System.out.println("could not highlight " + ve);
 				}
 			}
 			
@@ -280,6 +309,7 @@ public class EditorJPanel extends JPanel {
 		} catch (Exception e) {
 			if (e instanceof RuntimeException) {
 				e.printStackTrace();
+				showException("Update", e);
 			}
 			System.out.println("could not update: " + e);
 			pathField.setText("");
@@ -291,7 +321,7 @@ public class EditorJPanel extends JPanel {
 	private void pathUpdated () {
 		System.out.println("path updated");
 		try {
-			MsgInfo info = getMessageInfo();
+			MsgInfo info = getMsgInfo();
 			String path = pathField.getText();
 			String value = info.terser.get(path);
 			valueField.setText(StringEscapeUtils.escapeJava(value));
@@ -314,7 +344,7 @@ public class EditorJPanel extends JPanel {
 		
 		try {
 			String path = pathField.getText();
-			MsgInfo info = getMessageInfo();
+			MsgInfo info = getMsgInfo();
 			MsgPos pos = MsgUtil.getPosition(info.terser, path);
 			
 			// set the new value
@@ -403,28 +433,41 @@ public class EditorJPanel extends JPanel {
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
-			JOptionPane.showMessageDialog(SwingUtilities.getWindowAncestor(this), WordUtils.wrap(e.toString(), 80), "Paste", JOptionPane.ERROR_MESSAGE);
+			showException("Paste", e);
 		}
 	}
 	
-	public MsgInfo getMessageInfo () throws Exception {
-		// guess where the segment separators should be
-		String text = msgArea.getText();
-		MsgSep sep = new MsgSep(text);
-		Pattern segPat = Pattern.compile("[A-Z0-9]{3}" + Pattern.quote(String.valueOf(sep.field)));
-		StringBuilder sb = new StringBuilder(text);
-		int i = 0;
-		while ((i = sb.indexOf("\n", i + 1)) > 0) {
-			if (i < sb.length() - 4) {
-				String seg = sb.substring(i + 1, i + 5);
-				if (segPat.matcher(seg).matches()) {
-					sb.replace(i, i + 1, "\r");
+	public MsgInfo getMsgInfo () throws Exception {
+		return MsgUtil.getInfo(getMsgCr(), msgVersion);
+	}
+
+	private void showException (String title, Exception e) {
+		JOptionPane.showMessageDialog(SwingUtilities.getWindowAncestor(this), WordUtils.wrap(e.toString(), 80), 
+				title, JOptionPane.ERROR_MESSAGE);
+	}
+
+	public void find () {
+		try {
+			MsgInfo info = getMsgInfo();
+			FindJDialog dialog = new FindJDialog(SwingUtilities.getWindowAncestor(this), info.msg, findText);
+			dialog.setLocationRelativeTo(this);
+			dialog.setModal(true);
+			dialog.setVisible(true);
+			findText = dialog.getFindText();
+			String terserPath = dialog.getTerserPath();
+			if (terserPath != null) {
+				MsgPos pos = MsgUtil.getPosition(info.terser, terserPath);
+				int[] i = MsgUtil.getIndexes(info.msgCr, info.sep, pos);
+				if (i != null) {
+					msgArea.setSelectionStart(i[0]);
+					msgArea.setSelectionEnd(i[1]);
 				}
-			} else {
-				sb.replace(i, i + 1, "\r");
 			}
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+			showException("Send", e);
 		}
-		return MsgUtil.getInfo(sb.toString(), msgVersion);
 	}
 	
 }

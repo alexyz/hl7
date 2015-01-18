@@ -11,6 +11,7 @@ import java.util.prefs.Preferences;
 
 import javax.swing.*;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.text.WordUtils;
 
 import jsui.JSJDialog;
@@ -40,7 +41,6 @@ public class EditorJFrame extends JFrame {
 	private String js = "util.replace('A', 'B');";
 	private String host = "localhost";
 	private int port = 1000;
-	private String findText = "";
 	
 	public EditorJFrame () {
 		super("HAPI HL7|^~\\&!");
@@ -255,19 +255,12 @@ public class EditorJFrame extends JFrame {
 		Component comp = tabs.getSelectedComponent();
 		if (comp instanceof EditorJPanel) {
 			EditorJPanel ep = (EditorJPanel) comp;
-			try {
-				MsgInfo info = ep.getMessageInfo();
-				FindJDialog dialog = new FindJDialog(this, info.msg, findText);
-				dialog.setLocationRelativeTo(this);
-				dialog.setModal(true);
-				dialog.setVisible(true);
-				findText = dialog.getFindText();
-				
-			} catch (Exception e) {
-				e.printStackTrace();
-				JOptionPane.showMessageDialog(this, WordUtils.wrap(e.toString(), 80), "Send", JOptionPane.ERROR_MESSAGE);
-			}
+			ep.find();
 		}
+	}
+
+	private void showException (String title, Exception e) {
+		JOptionPane.showMessageDialog(this, WordUtils.wrap(e.toString(), 80), title, JOptionPane.ERROR_MESSAGE);
 	}
 	
 	private void send () {
@@ -276,7 +269,7 @@ public class EditorJFrame extends JFrame {
 		if (comp instanceof EditorJPanel) {
 			EditorJPanel ep = (EditorJPanel) comp;
 			try {
-				MsgInfo info = ep.getMessageInfo();
+				MsgInfo info = ep.getMsgInfo();
 				HostJDialog hostDialog = new HostJDialog(this, host, port);
 				hostDialog.setVisible(true);
 				if (hostDialog.isOk()) {
@@ -290,7 +283,7 @@ public class EditorJFrame extends JFrame {
 				
 			} catch (Exception e) {
 				e.printStackTrace();
-				JOptionPane.showMessageDialog(this, WordUtils.wrap(e.toString(), 80), "Send", JOptionPane.ERROR_MESSAGE);
+				showException("Send", e);
 			}
 		}
 	}
@@ -301,8 +294,8 @@ public class EditorJFrame extends JFrame {
 		if (comp instanceof EditorJPanel) {
 			EditorJPanel ep = (EditorJPanel) comp;
 			try {
-				MsgInfo info = ep.getMessageInfo();
-				MsgInfo info2 = ep.getMessageInfo();
+				MsgInfo info = ep.getMsgInfo();
+				MsgInfo info2 = ep.getMsgInfo();
 				Map<String, Object> m = new TreeMap<>();
 				m.put("message", info.msg);
 				m.put("terser", info.terser);
@@ -315,13 +308,13 @@ public class EditorJFrame extends JFrame {
 				if (!MsgUtil.equals(info.msg, info2.msg)) {
 					int opt = JOptionPane.showConfirmDialog(this, "Update message?", "Apply", JOptionPane.YES_NO_OPTION);
 					if (opt == JOptionPane.YES_OPTION) {
-						ep.setMessage(info.msg.encode().replace("\r", "\n"));
+						ep.setMsg(info.msg.encode());
 					}
 				}
 				
 			} catch (Exception e) {
 				e.printStackTrace();
-				JOptionPane.showMessageDialog(this, WordUtils.wrap(e.toString(), 80), "Apply", JOptionPane.ERROR_MESSAGE);
+				showException("Apply Script", e);
 			}
 		}
 	}
@@ -332,14 +325,14 @@ public class EditorJFrame extends JFrame {
 		if (comp instanceof EditorJPanel) {
 			EditorJPanel ep = (EditorJPanel) comp;
 			try {
-				MsgInfo info = ep.getMessageInfo();
+				MsgInfo info = ep.getMsgInfo();
 				String structure = info.msg.printStructure();
 				TextJDialog dialog = new TextJDialog(EditorJFrame.this, "Structure", editorFont, structure);
 				dialog.setVisible(true);
 				
 			} catch (Exception e) {
 				e.printStackTrace();
-				JOptionPane.showMessageDialog(this, WordUtils.wrap(e.toString(), 80), "Structure", JOptionPane.ERROR_MESSAGE);
+				showException("Print Structure", e);
 			}
 		}
 	}
@@ -350,14 +343,14 @@ public class EditorJFrame extends JFrame {
 		if (comp instanceof EditorJPanel) {
 			EditorJPanel ep = (EditorJPanel) comp;
 			try {
-				MsgInfo info = ep.getMessageInfo();
+				MsgInfo info = ep.getMsgInfo();
 				String locations = MsgUtil.printLocations(info.msg);
 				TextJDialog dialog = new TextJDialog(EditorJFrame.this, "Locations", editorFont, locations);
 				dialog.setVisible(true);
 				
 			} catch (Exception e) {
 				e.printStackTrace();
-				JOptionPane.showMessageDialog(SwingUtilities.getWindowAncestor(this), e.toString(), "Locations", JOptionPane.ERROR_MESSAGE);
+				showException("Print Locations", e);
 			}
 		}
 	}
@@ -396,12 +389,12 @@ public class EditorJFrame extends JFrame {
 			EditorJPanel ep = new EditorJPanel();
 			ep.setMsgVersion(messageVersion);
 			ep.setFile(file);
-			ep.setMessage(msgLf);
+			ep.setMsg(msgLf);
 			addEditor(file.getName(), ep);
 			
 		} catch (Exception e) {
 			e.printStackTrace();
-			JOptionPane.showMessageDialog(this, WordUtils.wrap(e.toString(), 80), "Open", JOptionPane.ERROR_MESSAGE);
+			showException("Open File", e);
 		}
 	}
 	
@@ -432,11 +425,11 @@ public class EditorJFrame extends JFrame {
 				if (JOptionPane.showConfirmDialog(this, "Re-open file?", "Re-open", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
 					try {
 						String text = FileUtil.readFile(file);
-						ep.setMessage(text);
+						ep.setMsg(text);
 						
 					} catch (Exception e) {
 						e.printStackTrace();
-						JOptionPane.showMessageDialog(this, WordUtils.wrap(e.toString(), 80), "Re-open", JOptionPane.ERROR_MESSAGE);
+						showException("Re-open File", e);
 					}
 				}
 			}
@@ -458,13 +451,13 @@ public class EditorJFrame extends JFrame {
 				dir = fc.getCurrentDirectory();
 				File file = fc.getSelectedFile();
 				try {
-					FileUtil.writeFile(file, ep.getMessage().replace('\n', MsgSep.SEGMENT));
+					FileUtil.writeFile(file, ep.getMsgCr());
 					ep.setFile(file);
 					tabs.setTitleAt(tabs.getSelectedIndex(), file.getName());
 					
 				} catch (Exception e) {
 					e.printStackTrace();
-					JOptionPane.showMessageDialog(this, WordUtils.wrap(e.toString(), 80), "Save", JOptionPane.ERROR_MESSAGE);
+					showException("Save File", e);
 				}
 			}
 		}
@@ -474,10 +467,11 @@ public class EditorJFrame extends JFrame {
 		System.out.println("close current editor");
 		EditorJPanel ep = (EditorJPanel) tabs.getSelectedComponent();
 		if (ep != null) {
-			String message = ep.getMessage();
-			if (message == null || message.length() == 0
-					|| JOptionPane.showConfirmDialog(this, "Close editor?", "Close", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
-				tabs.remove(ep);
+			String msgCr = ep.getMsgCr();
+			if (StringUtils.isNotBlank(msgCr)) {
+				if (JOptionPane.showConfirmDialog(this, "Close editor?", "Close", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
+					tabs.remove(ep);
+				}
 			}
 		}
 	}
