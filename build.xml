@@ -25,7 +25,7 @@
 		</jar>
 		<jar destfile="dist/${jarfile26}">
 			<manifest>
-				<attribute name="Main-Class" value="hu.EditorJFrame" />
+				<attribute name="Main-Class" value="hu.ui.EditorJFrame" />
 			</manifest>
 			<fileset dir="bin" />
 			<fileset dir="../jsui/bin" />
