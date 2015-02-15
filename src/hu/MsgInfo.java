@@ -6,7 +6,7 @@ import ca.uhn.hl7v2.util.Terser;
 /**
  * represents message and terser
  */
-class MsgInfo {
+public class MsgInfo {
 	public final Message msg;
 	public final Terser terser;
 	public final MsgSep sep;

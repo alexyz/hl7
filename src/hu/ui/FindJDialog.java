@@ -1,4 +1,4 @@
-package hu;
+package hu.ui;
 
 import hu.mv.FindingMessageVisitor;
 

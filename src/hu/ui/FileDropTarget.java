@@ -1,4 +1,4 @@
-package hu;
+package hu.ui;
 
 import java.awt.datatransfer.*;
 import java.awt.dnd.*;

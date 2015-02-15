@@ -153,7 +153,7 @@ public class MsgUtil {
 				}
 			}
 			path = pathSb.toString();
-			desc = getDescription(sl.segment, pos, descSep);
+			desc = getDescription(sl.segment, pos, descSep).toString();
 			
 			if (pos.fieldOrd > 0) {
 				try {
@@ -205,7 +205,7 @@ public class MsgUtil {
 		if (segOrd[0] == 0) {
 			System.out.println("could not get segment ordinal of " + findSegment);
 		}
-			
+		
 		return segOrd[0];
 	}
 	
@@ -236,11 +236,11 @@ public class MsgUtil {
 	/** get description of hl7 field, component and subcomponent */
 	public static String getDescription (final Message msg, final MsgPos pos, final String descSep) {
 		MsgSeg sl = getSegment(msg, pos.segOrd);
-		return getDescription(sl.segment, pos, descSep);
+		return getDescription(sl.segment, pos, descSep).toString();
 	}
 	
 	/** get description of hl7 field, component and subcomponent */
-	public static String getDescription (final Segment segment, final MsgPos pos, final String descSep) {
+	public static StringBuilder getDescription (final Segment segment, final MsgPos pos, final String sep) {
 		System.out.println("get description " + pos);
 		final Message msg = segment.getMessage();
 		final String msgType = msg.getName().substring(0, 3);
@@ -248,78 +248,78 @@ public class MsgUtil {
 		final String segDesc = segments.getProperty(segment.getName(), "unknown");
 		
 		final StringBuilder sb = new StringBuilder();
-		sb.append("Message " + msgType + ": " + msgTypeDesc + " [" + msg.getName() + "]");
-		sb.append(" " + descSep + " ");
-		sb.append("Segment " + segment.getName() + ": " + segDesc);
+		sb.append("Message: " + msgTypeDesc + " [" + msg.getName() + "]");
+		sb.append(sep).append("Segment " + segment.getName() + ": " + segDesc);
 		
-		Class<?>[] type = new Class[] { segment.getClass() };
-		
-		if (pos.fieldOrd > 0) {
-			String field = getDescription2(type, pos.fieldOrd);
-			if (field != null) {
-				sb.append(" " + descSep + " ");
-				sb.append("Field " + pos.fieldOrd + ": " + field);
-				if (type[0] != null) {
-					String comp = getDescription2(type, pos.compOrd);
-					if (comp != null) {
-						sb.append(" " + descSep + " ");
-						sb.append("Component " + pos.compOrd + ": " + comp);
-						if (type[0] != null) {
-							String subcomp = getDescription2(type, pos.subCompOrd);
-							sb.append(" " + descSep + " ");
-							if (subcomp != null) {
-								sb.append("Subcomponent " + pos.subCompOrd + ": " + subcomp);
-							} else {
-								sb.append("Unknown subcomponent " + pos.subCompOrd);
-							}
-						} else if (pos.subCompOrd > 1) {
-							sb.append(" " + descSep + " ");
-							sb.append("Unknown subcomponent " + pos.subCompOrd);
-						}
-					} else {
-						sb.append(" " + descSep + " ");
-						sb.append("Unknown component " + pos.compOrd);
-					}
-				} else if (pos.compOrd > 1) {
-					sb.append(" " + descSep + " ");
-					sb.append("Unknown component " + pos.compOrd);
-					
-				} else if (pos.subCompOrd > 1) {
-					sb.append(" " + descSep + " ");
-					sb.append("Unknown subcomponent " + pos.subCompOrd);
-				}
-			} else {
-				sb.append(" " + descSep + " ");
-				sb.append("Unknown field " + pos.fieldOrd);
+		final Method fieldMethod = getMethod(segment.getClass(), pos.fieldOrd);
+		if (fieldMethod == null) {
+			if (pos.fieldOrd > 0) {
+				sb.append(sep).append("Field " + pos.fieldOrd + ": Unknown");
 			}
+			return sb;
 		}
 		
-		return sb.toString();
+		String fieldName = fieldMethod.getName().substring(3);
+		// see if hapi has a proper field name
+		final String[] segNames = segment.getNames();
+		if (segNames != null && segNames.length >= pos.fieldOrd && segNames[pos.fieldOrd - 1] != null) {
+			fieldName = segNames[pos.fieldOrd - 1];
+		}
+		final Class<?> fieldType = fieldMethod.getReturnType();
+		sb.append(sep).append("Field " + pos.fieldOrd + ": " + fieldName + " [" + fieldType.getSimpleName() + "]");
+		
+		Method compMethod = getMethod(fieldType, pos.compOrd);
+		if (compMethod == null) {
+			if (pos.compOrd > 1) {
+				sb.append(sep).append("Component " + pos.compOrd + ": unknown");
+			}
+			if (pos.subCompOrd > 1) {
+				sb.append(sep).append("Subcomponent " + pos.compOrd + ": unknown");
+			}
+			return sb;
+		}
+		
+		final String compName = compMethod.getName().substring(3);
+		final Class<?> compType = compMethod.getReturnType();
+		sb.append(sep).append("Component " + pos.compOrd + ": " + compName + " [" + compType.getSimpleName() + "]");
+		
+		Method subCompMethod = getMethod(compType, pos.subCompOrd);
+		if (subCompMethod == null) {
+			if (pos.subCompOrd > 1) {
+				sb.append(sep).append("Subcomponent " + pos.subCompOrd + ": unknown");
+			}
+			return sb;
+		}
+		
+		final Class<?> subCompType = subCompMethod.getReturnType();
+		final String subCompName = subCompMethod.getName().substring(3);
+		sb.append(sep).append("Subcomponent " + pos.subCompOrd + ": " + subCompName + " [" + subCompType.getSimpleName() + "]");
+		
+		return sb;
 	}
 	
-	/** get description of method from class */
-	private static String getDescription2 (Class<?>[] type, int ord) {
-		Pattern methodPat = Pattern.compile("get\\w{" + type[0].getSimpleName().length() + "}(\\d+)_(\\w+)");
-		for (Method m : type[0].getMethods()) {
-			Class<?> rt = m.getReturnType();
-			if (rt != null && !rt.isPrimitive()) {
-				// getObr5_PriorityOBR()
-				Matcher mat = methodPat.matcher(m.getName());
+	/**
+	 * get method from class, method always returns non void and may take one
+	 * parameter for repetition
+	 */
+	private static Method getMethod (final Class<?> type, final int ord) {
+		// getObr5_PriorityOBR()
+		// getXcn13_IdentifierTypeCode()
+		// getPv125_ContractEffectiveDate()
+		Pattern pat = Pattern.compile("get\\w{" + type.getSimpleName().length() + "}(\\d+)_(\\w+)");
+		for (Method method : type.getMethods()) {
+			Class<?> rt = method.getReturnType();
+			if (rt != null && !rt.isPrimitive() && !rt.isArray()) {
+				Matcher mat = pat.matcher(method.getName());
 				if (mat.matches()) {
-					int f = Integer.parseInt(mat.group(1));
-					if (f == ord) {
-						if (Object[].class.isAssignableFrom(rt)) {
-							// remove array indirection
-							rt = rt.getComponentType();
+					final int index = Integer.parseInt(mat.group(1));
+					final String name = mat.group(2);
+					if (index == ord) {
+						try {
+							return type.getMethod("get" + name, method.getParameterTypes());
+						} catch (Exception e) {
+							throw new RuntimeException(e);
 						}
-						String name = mat.group(2) + " [" + rt.getSimpleName() + "]";
-						if (AbstractPrimitive.class.isAssignableFrom(rt)) {
-							System.out.println("name " + name + " is abstract primitive");
-							// can't go deeper
-							rt = null;
-						}
-						type[0] = rt;
-						return name;
 					}
 				}
 			}

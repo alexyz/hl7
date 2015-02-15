@@ -1,4 +1,6 @@
-package hu;
+package hu.ui;
+
+import hu.*;
 
 import java.awt.Component;
 import java.awt.Dimension;

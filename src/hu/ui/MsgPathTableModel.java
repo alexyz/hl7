@@ -1,4 +1,6 @@
-package hu;
+package hu.ui;
+
+import hu.*;
 
 import java.util.List;
 

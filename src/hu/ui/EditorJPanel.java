@@ -1,5 +1,6 @@
-package hu;
+package hu.ui;
 
+import hu.*;
 import hu.mv.Comment;
 
 import java.awt.BorderLayout;
@@ -24,7 +25,7 @@ import org.apache.commons.lang3.text.WordUtils;
 
 public class EditorJPanel extends JPanel {
 	
-	private static final String DESC_SEP = "\u25aa";
+	private static final String DESC_SEP = " \u25aa ";
 	private static final Color ERROR_COL = new Color(255, 192, 192);
 	private static final Color SEGMENT_COL = new Color(192, 255, 192);
 	private static final Color VALUE_COL = new Color(255, 255, 192);

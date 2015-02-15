@@ -1,4 +1,4 @@
-package hu;
+package hu.ui;
 
 import java.awt.BorderLayout;
 import java.awt.Font;

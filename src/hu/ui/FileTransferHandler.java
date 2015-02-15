@@ -1,4 +1,4 @@
-package hu;
+package hu.ui;
 
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
