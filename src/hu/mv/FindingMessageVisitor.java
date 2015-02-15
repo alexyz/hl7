@@ -20,13 +20,13 @@ public class FindingMessageVisitor extends MessageVisitorAdapter {
 	}
 	
 	@Override
-	public boolean start (Group group, Location location) throws HL7Exception {
+	public boolean start2 (AbstractGroup group, Location location) throws HL7Exception {
 		test(location, group.getName());
 		return true;
 	}
 	
 	@Override
-	public boolean start2 (Segment segment, Location location) throws HL7Exception {
+	public boolean start2 (AbstractSegment segment, Location location) throws HL7Exception {
 		test(location, segment.getName());
 		return true;
 	}

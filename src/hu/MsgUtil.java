@@ -113,7 +113,7 @@ public class MsgUtil {
 		return new MsgInfo(msg, terser, sep, msgCr);
 	}
 	
-	public static List<ValidationMessage> getErrors (Message msg, String msgCr, MsgSep sep, String msgVersion, String selectedValue) throws Exception {
+	public static List<Comment> getErrors (Message msg, String msgCr, MsgSep sep, String msgVersion, String selectedValue) throws Exception {
 		switch (msgVersion) {
 			case DEFAULT_VERSION:
 			case GENERIC_VERSION:
@@ -127,7 +127,7 @@ public class MsgUtil {
 		}
 		ValidatingMessageVisitor vmv = new ValidatingMessageVisitor(msgCr, sep, msgVersion, selectedValue);
 		MessageVisitors.visit(msg, vmv);
-		return vmv.getErrors();
+		return vmv.getComments();
 	}
 	
 	/** get the terser path for the message position */
@@ -186,7 +186,7 @@ public class MsgUtil {
 			int s = 1;
 			
 			@Override
-			public boolean start2 (Segment segment, Location location) throws HL7Exception {
+			public boolean start2 (AbstractSegment segment, Location location) throws HL7Exception {
 				//System.out.println("segment=" + segment + " s=" + s);
 				if (!segment.isEmpty()) {
 					if (findSegment == segment) {
@@ -216,7 +216,7 @@ public class MsgUtil {
 			int s = 1;
 			
 			@Override
-			public boolean start2 (Segment segment, Location location) throws HL7Exception {
+			public boolean start2 (AbstractSegment segment, Location location) throws HL7Exception {
 				if (s == segmentOrd) {
 					sl[0] = new MsgSeg(segment, location);
 					continue_ = false;
@@ -313,7 +313,7 @@ public class MsgUtil {
 							rt = rt.getComponentType();
 						}
 						String name = mat.group(2) + " [" + rt.getSimpleName() + "]";
-						if (rt != null && AbstractPrimitive.class.isAssignableFrom(rt)) {
+						if (AbstractPrimitive.class.isAssignableFrom(rt)) {
 							System.out.println("name " + name + " is abstract primitive");
 							// can't go deeper
 							rt = null;

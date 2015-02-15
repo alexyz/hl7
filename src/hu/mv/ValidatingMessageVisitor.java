@@ -19,7 +19,7 @@ public class ValidatingMessageVisitor extends MessageVisitorAdapter {
 	private final String version;
 	private final String msgCr;
 	private final MsgSep sep;
-	private final List<ValidationMessage> errors = new ArrayList<>();
+	private final List<Comment> comments = new ArrayList<>();
 	private final String selectedValue;
 	
 	private int segOrd;
@@ -35,21 +35,49 @@ public class ValidatingMessageVisitor extends MessageVisitorAdapter {
 	}
 	
 	@Override
-	public boolean start2 (Segment segment, Location location) throws HL7Exception {
+	public boolean start2 (AbstractSegment segment, Location location) throws HL7Exception {
 		segOrd++;
+		// TODO
+		//currentGroup.isRepeating()
+		
+		String msg = null;
+		Comment.Type type = null;
+		if (((AbstractGroup)segment.getParent()).getNonStandardNames().contains(segment.getName())) {
+			msg = "Non standard segment";
+			type = Comment.Type.ERROR;
+		} else {
+			type = Comment.Type.SEGMENT;
+		}
+		
 		MsgPos pos = new MsgPos(segOrd, 0, 0, 1, 1);
 		int[] index = MsgUtil.getIndexes(msgCr, sep, pos);
-		errors.add(new ValidationMessage(pos, segment.getName(), index, ValidationMessage.Type.SEGMENT));
+		comments.add(new Comment(pos, msg, index, type));
+		return true;
+	}
+	
+	@Override
+	public boolean start2 (AbstractGroup group, Location location) throws HL7Exception {
+		return true;
+	}
+	
+	@Override
+	public boolean start2 (Field field, Location location) throws HL7Exception {
+		field.isEmpty();
+		// TODO
+//		segment.numFields();
+//		currentSegment.isRequired(location.getField());
+//		currentSegment.getMaxCardinality(location.getField());
+//		currentSegment.getLength(location.getField());
 		return true;
 	}
 	
 	@Override
 	public boolean visit2 (final Primitive primitive, final Location location) throws HL7Exception {
-		ValidationMessage.Type vmType = null;
+		Comment.Type vmType = null;
 		String vmMsg = "";
 		
 		if (selectedValue != null && selectedValue.equalsIgnoreCase(primitive.getValue())) {
-			vmType = ValidationMessage.Type.VALUE;
+			vmType = Comment.Type.VALUE;
 			
 		} else {
 			final Collection<PrimitiveTypeRule> rules = vc.getPrimitiveRules(version, primitive.getName(), primitive);
@@ -57,7 +85,7 @@ public class ValidatingMessageVisitor extends MessageVisitorAdapter {
 				final String v = rule.correct(primitive.getValue());
 				final ValidationException[] ves = rule.apply(v);
 				if (ves.length > 0) {
-					vmType = ValidationMessage.Type.ERROR;
+					vmType = Comment.Type.ERROR;
 					vmMsg = rule.getDescription().replace("%s", primitive.getValue());
 					break;
 				}
@@ -72,14 +100,14 @@ public class ValidatingMessageVisitor extends MessageVisitorAdapter {
 			final int field = location.getField();
 			final MsgPos pos = new MsgPos(segOrd, field, rep, comp, subcomp);
 			final int[] index = MsgUtil.getIndexes(msgCr, sep, pos);
-			errors.add(new ValidationMessage(pos, vmMsg, index, vmType));
+			comments.add(new Comment(pos, vmMsg, index, vmType));
 		}
 		
 		return true;
 	}
 	
 	/** get the list of errors, maybe empty, never null */
-	public List<ValidationMessage> getErrors () {
-		return errors;
+	public List<Comment> getComments () {
+		return comments;
 	}
 }

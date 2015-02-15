@@ -1,6 +1,6 @@
 package hu;
 
-import hu.mv.ValidationMessage;
+import hu.mv.Comment;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -29,7 +29,7 @@ public class EditorJPanel extends JPanel {
 	private static final Color SEGMENT_COL = new Color(192, 255, 192);
 	private static final Color VALUE_COL = new Color(255, 255, 192);
 	
-	private static Color getColor (ValidationMessage.Type type) {
+	private static Color getColor (Comment.Type type) {
 		switch (type) {
 			case ERROR:
 				return ERROR_COL;
@@ -266,13 +266,13 @@ public class EditorJPanel extends JPanel {
 			
 			final MsgInfo info = getMsgInfo();
 			final MsgPos pos = MsgUtil.getPosition(info.msgCr, info.sep, caretIndex);
-			final List<ValidationMessage> errors = MsgUtil.getErrors(info.msg, info.msgCr, info.sep, msgVersion, selectedValue);
+			final List<Comment> errors = MsgUtil.getErrors(info.msg, info.msgCr, info.sep, msgVersion, selectedValue);
 			System.out.println("errors: " + errors.size());
 			
 			String currentError = null;
-			for (ValidationMessage ve : errors) {
+			for (Comment ve : errors) {
 				//System.out.println("highlight " + ve);
-				if (ve.pos.equals(pos) && ve.type == ValidationMessage.Type.ERROR) {
+				if (ve.pos.equals(pos) && ve.type == Comment.Type.ERROR) {
 					currentError = ve.msg;
 				}
 				
@@ -308,10 +308,10 @@ public class EditorJPanel extends JPanel {
 			
 		} catch (Exception e) {
 			if (e instanceof RuntimeException) {
-				e.printStackTrace();
 				showException("Update", e);
 			}
 			System.out.println("could not update: " + e);
+			e.printStackTrace(System.out);
 			pathField.setText("");
 			valueField.setText("");
 			descriptionArea.setText(e.toString());

@@ -12,31 +12,61 @@ public class MessageVisitorAdapter implements MessageVisitor {
 	 * continue visiting structures (true by default)
 	 */
 	protected boolean continue_ = true;
+	protected Segment currentSegment;
+	protected Field currentField;
+	protected Group currentGroup;
+	protected Message currentMessage;
+	protected Composite currentComposite;
+	protected String[] currentSegmentNames;
 	
 	private final Map<String, Integer> fieldReps = new TreeMap<>();
 	
 	@Override
-	public boolean start (Message message) throws HL7Exception {
+	public final boolean start (Message message) throws HL7Exception {
+		currentMessage = message;
+		currentGroup = message;
+		return start2((AbstractMessage) message);
+	}
+	
+	public boolean start2 (AbstractMessage message) throws HL7Exception {
+		return continue_;
+	} 
+	
+	@Override
+	public final boolean end (Message message) throws HL7Exception {
+		currentMessage = null;
+		currentGroup = null;
+		return end2((AbstractMessage) message);
+	}
+	
+	public boolean end2 (AbstractMessage message) throws HL7Exception {
 		return continue_;
 	}
 	
 	@Override
-	public boolean end (Message message) throws HL7Exception {
+	public final boolean start (Group group, Location location) throws HL7Exception {
+		currentGroup = group;
+		return start2((AbstractGroup) group, location);
+	}
+	
+	public boolean start2 (AbstractGroup group, Location location) throws HL7Exception {
 		return continue_;
 	}
 	
 	@Override
-	public boolean start (Group group, Location location) throws HL7Exception {
-		return continue_;
+	public final boolean end (Group group, Location location) throws HL7Exception {
+		currentGroup = null;
+		return end2((AbstractGroup) group, location);
 	}
 	
-	@Override
-	public boolean end (Group group, Location location) throws HL7Exception {
+	public boolean end2 (AbstractGroup group, Location location) throws HL7Exception {
 		return continue_;
 	}
 	
 	@Override
 	public final boolean start (Segment segment, Location location) throws HL7Exception {
+		currentSegment = segment;
+		currentSegmentNames = segment.getNames();
 		fieldReps.clear();
 		Group parent = segment.getParent();
 		if (parent instanceof AbstractGroup) {
@@ -53,20 +83,26 @@ public class MessageVisitorAdapter implements MessageVisitor {
 				}
 			}
 		}
-		return start2(segment, location);
+		return start2((AbstractSegment)segment, location);
 	}
 	
-	public boolean start2 (Segment segment, Location location) throws HL7Exception {
+	public boolean start2 (AbstractSegment segment, Location location) throws HL7Exception {
 		return continue_;
 	}
 	
 	@Override
-	public boolean end (Segment segment, Location location) throws HL7Exception {
+	public final boolean end (Segment segment, Location location) throws HL7Exception {
+		currentSegment = null;
+		return end2((AbstractSegment)segment,location);
+	}
+	
+	public boolean end2 (AbstractSegment segment, Location location) throws HL7Exception {
 		return continue_;
 	}
 	
 	@Override
 	public final boolean start (Field field, Location location) throws HL7Exception {
+		currentField = field;
 		fieldReps.clear();
 		return start2(field, location);
 	}
@@ -76,12 +112,18 @@ public class MessageVisitorAdapter implements MessageVisitor {
 	}
 	
 	@Override
-	public boolean end (Field field, Location location) throws HL7Exception {
+	public final boolean end (Field field, Location location) throws HL7Exception {
+		currentField = null;
+		return end2(field,location);
+	}
+	
+	public boolean end2 (Field field, Location location) throws HL7Exception {
 		return continue_;
 	}
 	
 	@Override
 	public final boolean start (Composite type, Location location) throws HL7Exception {
+		currentComposite = type;
 		updateFieldRepetition(location);
 		return start2(type, location);
 	}
@@ -91,7 +133,11 @@ public class MessageVisitorAdapter implements MessageVisitor {
 	}
 	
 	@Override
-	public boolean end (Composite type, Location location) throws HL7Exception {
+	public final boolean end (Composite type, Location location) throws HL7Exception {
+		return end2(type,location);
+	}
+	
+	public boolean end2 (Composite type, Location location) throws HL7Exception {
 		return continue_;
 	}
 	

@@ -7,19 +7,19 @@ import ca.uhn.hl7v2.model.*;
 public class PrintingMessageVisitor extends MessageVisitorAdapter {
 	
 	@Override
-	public boolean start (Message message) throws HL7Exception {
+	public boolean start2 (AbstractMessage message) throws HL7Exception {
 		System.out.println("start message");
 		return true;
 	}
 	
 	@Override
-	public boolean start (Group group, Location location) throws HL7Exception {
+	public boolean start2 (AbstractGroup group, Location location) throws HL7Exception {
 		System.out.println("  " + location + " group " + group);
 		return true;
 	}
 	
 	@Override
-	public boolean start2 (Segment segment, Location location) throws HL7Exception {
+	public boolean start2 (AbstractSegment segment, Location location) throws HL7Exception {
 		System.out.println("    " + location + " segment " + segment);
 		return true;
 	}
