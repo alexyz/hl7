@@ -131,7 +131,7 @@ public class MsgUtil {
 	}
 	
 	/** get the terser path for the message position */
-	public static MsgPath getTerserPath (final Message msg, final Terser t, final MsgPos pos, String descSep) throws Exception {
+	public static MsgPath getTerserPath (final Message msg, final Terser terser, final MsgPos pos, String descSep) throws Exception {
 		MsgSeg sl = getSegment(msg, pos.segOrd);
 		StringBuilder pathSb = new StringBuilder();
 		String desc = "";
@@ -157,7 +157,7 @@ public class MsgUtil {
 			
 			if (pos.fieldOrd > 0) {
 				try {
-					value = t.get(path);
+					value = terser.get(path);
 					
 				} catch (Exception e) {
 					System.out.println("could not get value of terser path: " + e);

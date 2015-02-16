@@ -56,8 +56,8 @@ public class StringMessageVisitor extends MessageVisitorAdapter {
 	@Override
 	public boolean start2 (Field field, Location location) throws HL7Exception {
 		sb.append(location + " is field");
-		if (currentSegmentNames != null && currentSegmentNames.length > location.getField()) {
-			sb.append(" " + currentSegmentNames[location.getField()]);
+		if (currentSegmentNames != null && currentSegmentNames.length >= location.getField()) {
+			sb.append(" " + currentSegmentNames[location.getField() - 1]);
 		}
 		boolean req = currentSegment.isRequired(location.getField());
 		if (req) {

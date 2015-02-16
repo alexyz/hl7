@@ -17,6 +17,7 @@ public class MessageVisitorAdapter implements MessageVisitor {
 	protected Group currentGroup;
 	protected Message currentMessage;
 	protected Composite currentComposite;
+	/** 0 indexed */
 	protected String[] currentSegmentNames;
 	
 	private final Map<String, Integer> fieldReps = new TreeMap<>();
