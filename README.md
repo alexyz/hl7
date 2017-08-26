@@ -10,9 +10,9 @@ Get HAPI from http://hl7api.sourceforge.net/
 Screenshots
 -----------
 
-![Screenshot](https://dl.dropboxusercontent.com/u/8069847/hl7.png)
+![Screenshot](hl7.png)
 
 Download
 --------
 
-[Runnable jar file (HL7 2.6 only)](https://dl.dropboxusercontent.com/u/8069847/hl7editor26only.jar)
+[Runnable jar file (HL7 2.6 only)](https://www.dropbox.com/s/o6fppui2wg6afpy/hl7editor26only.jar?dl=0)
