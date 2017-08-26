@@ -3,3 +3,7 @@ dist
 .DS_Store
 *.jar
 *.zip
+target
+.settings
+.classpath
+dependency-reduced-pom.xml
