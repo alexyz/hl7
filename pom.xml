@@ -39,6 +39,7 @@
 	<build>
 		<sourceDirectory>src</sourceDirectory>
 		<finalName>hl7editor</finalName>
+		<resources><resource><directory>resources</directory></resource></resources>
 		<plugins>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
@@ -70,25 +71,6 @@
 						<phase>package</phase>
 						<goals>
 							<goal>shade</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin>
-			<plugin>
-				<artifactId>maven-antrun-plugin</artifactId>
-				<version>1.8</version>
-				<executions>
-					<execution>
-						<phase>install</phase>
-						<configuration>
-							<target>
-								<copy todir="${user.home}/Dropbox/GitHub">
-									<fileset dir="target" includes="hl7editor.jar" />
-								</copy>
-							</target>
-						</configuration>
-						<goals>
-							<goal>run</goal>
 						</goals>
 					</execution>
 				</executions>

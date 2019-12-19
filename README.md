@@ -15,4 +15,4 @@ Screenshots
 Download
 --------
 
-[Runnable jar file (HL7 2.6 only)](https://www.dropbox.com/s/pgleirgeqsnn1v4/hl7editor.jar?dl=0)
+See GitHub releases!
